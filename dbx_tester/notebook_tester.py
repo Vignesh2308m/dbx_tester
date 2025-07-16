@@ -59,7 +59,7 @@ class NotebookTestRunner:
         return test_notebooks
 
 
-def notebook_test(func, config=None):
+def notebook_test(rel_path, func, config=None):
     cells = []
 
     # Add dbutils config if provided
