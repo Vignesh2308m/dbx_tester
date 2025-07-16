@@ -1,16 +1,31 @@
+from databricks_api import create_notebook, create_cell
+from pydantic import BaseModel
+
+
 class Widget(BaseModel):
+    key : str
+    value: str
+
+class TaskValue(BaseModel):
+    taskKey: str
     key : str
     value: str
 
 class WidgetManager():
     def __init__(self):
         self.widgets = []
+        self.task_values = []
     
-    def add(self, key, value):
+    def add_widgets(self, key, value):
         key = str(key)
         value = str(value)
         self.widgets.append(Widget(key=key, value=value))
-        return self  
+        return self
+    
+    def add_task(self, taskKey, key, value):
+        self.task_values.append(TaskValue(taskKey=taskKey, key=key, value=value))
+        return self
+    
     
     def dbutils_config(self):
         a = ""
@@ -18,23 +33,10 @@ class WidgetManager():
         for widget in self.widgets:
             a += f"dbutils.widgets.text('{widget.key}', '{widget.value}')\n"
         return a
-
-class TaskValue(BaseModel):
-    taskKey: str
-    key : str
-    value: str
-
-class TaskValueManager():
-    def __init__(self):
-        self.tasks = []
-    
-    def add(self, taskKey, key, value):
-        self.tasks.append(TaskValue(taskKey=taskKey, key=key, value=value))
-        return self
     
     def create_tasks(self):
         notebooks = dict()
-        for task in self.tasks:
+        for task in self.task_values:
             if task.taskKey not in notebooks:
                 notebooks[task.taskKey] = create_notebook(task.taskKey)
             notebooks[task.taskKey]["cells"].append(create_cell(f"dbutils.jobs.taskValues.set(key = '{task.key}', value = '{task.value}')"))
