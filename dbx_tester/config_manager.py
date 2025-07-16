@@ -11,7 +11,7 @@ class TaskValue(BaseModel):
     key : str
     value: str
 
-class WidgetManager():
+class ConfigManager():
     def __init__(self):
         self.widgets = []
         self.task_values = []
@@ -27,14 +27,14 @@ class WidgetManager():
         return self
     
     
-    def dbutils_config(self):
+    def _dbutils_config(self):
         a = ""
         a += "##### Setting DBUtils Widgets with Default value #####\n"
         for widget in self.widgets:
             a += f"dbutils.widgets.text('{widget.key}', '{widget.value}')\n"
         return a
     
-    def create_tasks(self):
+    def _create_tasks(self):
         notebooks = dict()
         for task in self.task_values:
             if task.taskKey not in notebooks:
