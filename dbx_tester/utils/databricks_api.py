@@ -13,7 +13,10 @@ def get_workspace_client():
 
     return w
 
-def decode_notebook(w:WorkspaceClient, path):
+def decode_notebook(path):
+
+    w = get_workspace_client()
+
     notebook_content = w.workspace.export(
         path= path,
         format=workspace.ExportFormat.JUPYTER
@@ -28,6 +31,9 @@ def decode_notebook(w:WorkspaceClient, path):
     return notebook_dict
 
 def encode_notebook(w:WorkspaceClient, path, notebook_dict):
+
+    w = get_workspace_client()
+
     out_str = json.dumps(notebook_dict)
 
     out_utf8 = out_str.encode('utf-8')
@@ -86,8 +92,6 @@ def create_cell(code:str):
             "source": [code]
         }
     
-
-
 def get_notebook_path():
     dbutils = DBUtils(SparkSession.builder.getOrCreate())
     return dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
