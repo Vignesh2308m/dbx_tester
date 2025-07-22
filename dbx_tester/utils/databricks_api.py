@@ -1,5 +1,7 @@
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service import workspace
+from databricks.sdk.service.workspace import ObjectType
+
 from pyspark.dbutils import DBUtils
 from pyspark.sql import SparkSession
 import base64
@@ -10,7 +12,6 @@ import uuid
 def get_workspace_client():
 
     w = WorkspaceClient()
-
     return w
 
 def decode_notebook(path):
@@ -95,3 +96,7 @@ def create_cell(code:str):
 def get_notebook_path():
     dbutils = DBUtils(SparkSession.builder.getOrCreate())
     return dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
+
+def is_notebook(path):
+    w = get_workspace_client()
+    return w.workspace.get_status(path=path).object_type == ObjectType.NOTEBOOK

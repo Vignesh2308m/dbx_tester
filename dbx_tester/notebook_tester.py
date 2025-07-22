@@ -1,9 +1,8 @@
-%pip install databricks-sdk --upgrade
 import os
 
 from global_config import GlobalConfig
 from config_manager import ConfigManager
-from utils.databricks_api import encode_notebook, create_notebook, create_cell, get_notebook_path
+from .utils.databricks_api import encode_notebook, create_notebook, create_cell, get_notebook_path
 
 
 def notebook_test(func, notebook_path=None, notebook_config=None, is_fullpath=False):
@@ -18,8 +17,10 @@ def notebook_test(func, notebook_path=None, notebook_config=None, is_fullpath=Fa
     relative_test_path = os.path.relpath(get_notebook_path(), cfg.TEST_PATH)
     test_cache_path = os.path.join(cfg.TEST_CACHE_PATH, relative_test_path)
 
-    os.makedirs(test_cache_path, exist_ok=True)    
-    os.makedirs(test_cache_path+"/tasks", exist_ok=True)
+    if not os.path.exists(test_cache_path):
+        os.mkdir(test_cache_path)
+    if not os.path.exists(test_cache_path + "/tasks"):
+        os.mkdir(test_cache_path + "/tasks")
 
     notebook_full_path = ""
     if is_fullpath:
@@ -43,8 +44,4 @@ def notebook_test(func, notebook_path=None, notebook_config=None, is_fullpath=Fa
     test_notebook["cells"] = cells
 
     encode_notebook(test_cache_path+f"/{func.__name__}", test_notebook)
-
-
-print(get_notebook_path())
-
-
+    

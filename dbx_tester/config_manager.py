@@ -1,4 +1,4 @@
-from databricks_api import create_notebook, create_cell
+from utils.databricks_api import create_notebook, create_cell
 from pydantic import BaseModel
 
 
