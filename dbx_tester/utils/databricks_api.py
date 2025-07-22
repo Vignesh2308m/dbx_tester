@@ -9,8 +9,10 @@ import json
 import boto3
 import uuid
 
-def get_workspace_client():
 
+from dbx_tester.global_config import GlobalConfig
+
+def get_workspace_client():
     w = WorkspaceClient()
     return w
 
@@ -95,8 +97,12 @@ def create_cell(code:str):
     
 def get_notebook_path():
     dbutils = DBUtils(SparkSession.builder.getOrCreate())
-    return dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
+    return "/Workspace"+dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
 
 def is_notebook(path):
     w = get_workspace_client()
     return w.workspace.get_status(path=path).object_type == ObjectType.NOTEBOOK
+
+def run_notebook(path, params={}):
+    dbutils = DBUtils(SparkSession.builder.getOrCreate())
+    dbutils.notebook.run(path=path, timeout_seconds=0, arguments=params)

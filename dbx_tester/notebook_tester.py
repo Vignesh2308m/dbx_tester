@@ -2,7 +2,7 @@ import os
 
 from global_config import GlobalConfig
 from config_manager import ConfigManager
-from .utils.databricks_api import encode_notebook, create_notebook, create_cell, get_notebook_path
+from utils.databricks_api import encode_notebook, create_notebook, create_cell, get_notebook_path
 
 
 def notebook_test(func, notebook_path=None, notebook_config=None, is_fullpath=False):
