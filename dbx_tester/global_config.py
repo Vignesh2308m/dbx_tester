@@ -4,7 +4,7 @@ import os
 
 class GlobalConfig:
     def __init__(self, config_path):
-        self.config_path = "/dbfs/tmp/dbx_tester_paths.json"
+        self.config_path = "./"
         self._REPO_PATH = None
         self._TEST_PATH = None
         self._TEST_CACHE_PATH = None
