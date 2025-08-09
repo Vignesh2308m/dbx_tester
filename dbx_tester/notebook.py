@@ -1,5 +1,5 @@
 from dbx_tester.global_config import GlobalConfig
-from dbx_tester.utils.databricks_api import *
+from dbx_tester.utils.databricks_api import get_notebook_path
 
 
 class notebook_test():
@@ -11,6 +11,17 @@ class notebook_test():
 
 
         self._transform_notebook()
+
+        pass
+
+    def _create_files_and_folders(self):
+        """
+        This function will create the files and folders needed for the test cache
+        """
+        current_path = get_notebook_path()
+
+        if self.global_config.TEST_CACHE_PATH:
+            pass
 
         pass
 
