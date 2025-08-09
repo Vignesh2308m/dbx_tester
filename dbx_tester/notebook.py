@@ -49,7 +49,7 @@ class notebook_test():
 
         if self.config is not None:
             for task, notebook in self.config._create_tasks().items():
-                notebook.save_notebook(self.task_dir / task)
+                notebook.save_notebook(self.task_dir / self.fn.__name__ / task)
             
             test_notebook + create_cell(self.config._dbutils_config())
 
@@ -61,9 +61,12 @@ class notebook_test():
 
         test_notebook + create_cell(f"{self.fn.__name__}().run()")
 
+        test_notebook.save_notebook(self.notebook_dir / self.fn.__name__)
+
         pass
 
-    def run(self):
+    def _run(self):
+        
         pass
 
 
