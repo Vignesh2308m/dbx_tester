@@ -3,7 +3,7 @@ from dbx_tester.utils.databricks_api import get_notebook_path
 from pathlib import Path
 
 class notebook_test():
-    def __init__(self, fn, path, config):
+    def __init__(self, fn, path=None, config=None):
         self.fn = fn
         self.path = path
         self.config = config
@@ -15,7 +15,6 @@ class notebook_test():
         self._create_files_and_folders()
         self._transform_notebook()
 
-        return self
 
     def _create_files_and_folders(self):
         """
@@ -34,7 +33,7 @@ class notebook_test():
         self.notebook_dir.mkdir(exist_ok=True)
 
         self.task_dir = self.notebook_dir / 'tasks'
-        self.notebook_dir.mkdir(exist_ok=True)
+        self.task_dir.mkdir(exist_ok=True)
 
         pass
 
@@ -61,5 +60,5 @@ class notebook_testrunner():
     def _run_tests(self):
         pass
 
-    def run(self):
+    def run(self):        
         pass
