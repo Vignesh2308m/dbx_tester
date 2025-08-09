@@ -33,49 +33,57 @@ def decode_notebook(path):
     
     return notebook_dict
 
-def encode_notebook(w:WorkspaceClient, path, notebook_dict):
 
-    w = get_workspace_client()
 
-    out_str = json.dumps(notebook_dict)
+class create_notebook:
+    def __init__(self, name:str, path):
+        self.path = path
+        self.workspace_client = get_workspace_client()
 
-    out_utf8 = out_str.encode('utf-8')
-
-    encoded_bytes = base64.b64encode(out_utf8).decode('utf-8')
-
-    w.workspace.import_(
-        path=path
-        , content=encoded_bytes,
-        overwrite=True,
-        format=workspace.ExportFormat.JUPYTER
-    )
-
-def create_notebook(name:str):
-    return {
-        "cells": [],
-        "metadata": {
-            "application/vnd.databricks.v1+notebook": {
-                "computePreferences": "null",
-                "dashboards": [],
-                "environmentMetadata": {
-                    "base_environment": "",
-                    "environment_version": "2"
+        self._notebook_dict = {
+            "cells": [],
+            "metadata": {
+                "application/vnd.databricks.v1+notebook": {
+                    "computePreferences": "null",
+                    "dashboards": [],
+                    "environmentMetadata": {
+                        "base_environment": "",
+                        "environment_version": "2"
+                    },
+                    "inputWidgetPreferences": "null",
+                    "language": "python",
+                    "notebookMetadata": {
+                        "pythonIndentUnit": 4
+                    },
+                    "notebookName": name,
+                    "widgets": {}
                 },
-                "inputWidgetPreferences": "null",
-                "language": "python",
-                "notebookMetadata": {
-                    "pythonIndentUnit": 4
-                },
-                "notebookName": name,
-                "widgets": {}
+                "language_info": {
+                    "name": "python"
+                }
             },
-            "language_info": {
-                "name": "python"
-            }
-        },
-        "nbformat": 4,
-        "nbformat_minor": 0
-    }
+            "nbformat": 4,
+            "nbformat_minor": 0
+        }
+    def __add__(self, cell):
+        self._notebook_dict['cells'].append(cell)
+
+    def save_notebook(self):
+
+        out_str = json.dumps(self._notebook_dict)
+
+        out_utf8 = out_str.encode('utf-8')
+
+        encoded_bytes = base64.b64encode(out_utf8).decode('utf-8')
+
+        self.workspace_client.workspace.import_(
+            path=self.path
+            , content=encoded_bytes,
+            overwrite=True,
+            format=workspace.ExportFormat.JUPYTER
+        )
+
+    
 
 def create_cell(code:str):
     return {
