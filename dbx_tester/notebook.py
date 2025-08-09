@@ -12,19 +12,21 @@ class notebook_test():
         self.config:ConfigManager = config
         self.global_config = GlobalConfig()
 
-        self.current_path = None
+        self.current_path = Path(get_notebook_path())
         self.notebook_dir = None
         self.task_dir = None
 
-        self._create_files_and_folders()
-        self._transform_notebook()
+        self.is_cache = self.current_path.parents[2].name != '_notebook_test_cache'
+
+        if self.is_cache:
+            self._create_files_and_folders()
+            self._transform_notebook()
 
 
     def _create_files_and_folders(self):
         """
         This function will create the files and folders needed for the test cache
         """
-        self.current_path = Path(get_notebook_path())
 
         if self.global_config.TEST_CACHE_PATH is None:
             test_cache_path = self.current_path.parent / '_notebook_test_cache'
@@ -65,8 +67,13 @@ class notebook_test():
 
         pass
 
-    def _run(self):
-        
+    def run(self, debug=False):
+        if debug:
+            #TODO
+            pass
+        else:
+            #TODO
+            self.fn()
         pass
 
 
