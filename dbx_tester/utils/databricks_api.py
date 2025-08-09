@@ -1,5 +1,5 @@
 from databricks.sdk import WorkspaceClient
-from databricks.sdk.service import workspace
+from databricks.sdk.service import workspace, jobs
 from databricks.sdk.service.workspace import ObjectType
 
 from pyspark.dbutils import DBUtils
@@ -113,3 +113,25 @@ def is_notebook(path):
 def run_notebook(path, params={}):
     dbutils = DBUtils(SparkSession.builder.getOrCreate())
     dbutils.notebook.run(path=path, timeout_seconds=0, arguments=params)
+
+class submit_run:
+    def __init__(self, name, cluster_id):
+        self.name = name
+        self.tasks = []
+        self.cluster_id = cluster_id
+        self.workspace_client = get_workspace_client()
+    
+    def add_task(self, task_key, notebook_path):
+        self.tasks.append(
+            jobs.SubmitTask(
+                existing_cluster_id=self.cluster_id,
+                notebook_task=jobs.NotebookTask(notebook_path=notebook_path),
+                task_key=task_key,
+            )
+        )
+
+    def run(self):
+        return self.workspace_client.jobs.submit(
+            run_name = self.name,
+            tasks = self.tasks
+        ).result()
