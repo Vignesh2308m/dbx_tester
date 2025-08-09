@@ -36,8 +36,7 @@ def decode_notebook(path):
 
 
 class create_notebook:
-    def __init__(self, name:str, path):
-        self.path = path
+    def __init__(self, name:str):
         self.workspace_client = get_workspace_client()
 
         self._notebook_dict = {
@@ -68,7 +67,7 @@ class create_notebook:
     def __add__(self, cell):
         self._notebook_dict['cells'].append(cell)
 
-    def save_notebook(self):
+    def save_notebook(self, path):
 
         out_str = json.dumps(self._notebook_dict)
 
@@ -77,7 +76,7 @@ class create_notebook:
         encoded_bytes = base64.b64encode(out_utf8).decode('utf-8')
 
         self.workspace_client.workspace.import_(
-            path=self.path
+            path=path
             , content=encoded_bytes,
             overwrite=True,
             format=workspace.ExportFormat.JUPYTER

@@ -39,5 +39,5 @@ class ConfigManager():
         for task in self.task_values:
             if task.taskKey not in notebooks:
                 notebooks[task.taskKey] = create_notebook(task.taskKey)
-            notebooks[task.taskKey]["cells"].append(create_cell(f"dbutils.jobs.taskValues.set(key = '{task.key}', value = '{task.value}')"))
+            notebooks[task.taskKey] + create_cell(f"dbutils.jobs.taskValues.set(key = '{task.key}', value = '{task.value}')")
         return notebooks

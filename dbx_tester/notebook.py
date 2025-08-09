@@ -1,5 +1,5 @@
 from dbx_tester.global_config import GlobalConfig
-from dbx_tester.utils.databricks_api import get_notebook_path
+from dbx_tester.utils.databricks_api import get_notebook_path, create_cell, create_notebook
 from pathlib import Path
 
 class notebook_test():
@@ -41,6 +41,7 @@ class notebook_test():
         """
         This function will transform the notebook to be run in the test cache
         """
+
         pass
 
 
