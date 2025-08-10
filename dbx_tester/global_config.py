@@ -9,6 +9,7 @@ class GlobalConfig:
         self._TEST_PATH = None
         self._TEST_CACHE_PATH = None
         self._LOG_PATH = None
+        self._CLUSTER_ID = None
         
         if not os.path.exists(self.config_path):
             with open(self.config_path, "w") as f:
@@ -75,3 +76,18 @@ class GlobalConfig:
         }
         with open(self.config_path, "w") as f:
             json.dump(config, f)
+    
+    @property
+    def CLUSTER_ID(self):
+        if os.path.exists(self.config_path):
+            with open(self.config_path, "r") as f:
+                config = json.load(f)
+                return config.get("CLUSTER_ID")
+        return self._CLUSTER_ID
+    
+    @CLUSTER_ID.setter
+    def CLUSTER_ID(self, value):
+        self._CLUSTER_ID = value
+        self.save()
+    
+    
