@@ -73,6 +73,7 @@ class notebook_test():
             for path in (self.task_dir / self.fn.__name__).iterdir():
                 s.add_task(path.name, path)
             
+            s.add_task(self.fn.__name__+'_task',self.notebook_dir / self.fn.__name__)
             s.run()
             pass
         else:
