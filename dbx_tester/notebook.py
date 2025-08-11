@@ -1,5 +1,5 @@
 from dbx_tester.global_config import GlobalConfig
-from dbx_tester.config_manager import ConfigManager
+from dbx_tester.config_manager import NotebookConfigManager
 from dbx_tester.utils.databricks_api import get_notebook_path, create_cell, create_notebook, submit_run, is_notebook, run_notebook
 from pathlib import Path
 from collections.abc import Callable
@@ -9,7 +9,7 @@ class notebook_test():
     def __init__(self, fn, path=None, config=None, cluster_id = None):
         self.fn:Callable[..., Any] | Type[Any] = fn
         self.path = path
-        self.config:ConfigManager = config
+        self.config:NotebookConfigManager = config
         self.global_config = GlobalConfig()
         if cluster_id is None:
             self.cluster_id = self.global_config.CLUSTER_ID

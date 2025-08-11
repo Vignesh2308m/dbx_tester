@@ -1,5 +1,6 @@
 from dbx_tester.utils.databricks_api import create_notebook, create_cell
 from pydantic import BaseModel
+from typing import Any
 
 
 class Widget(BaseModel):
@@ -11,7 +12,11 @@ class TaskValue(BaseModel):
     key : str
     value: str
 
-class ConfigManager():
+class RunParameter(BaseModel):
+    key:str
+    value:Any
+
+class NotebookConfigManager():
     def __init__(self):
         self.widgets = []
         self.task_values = []
@@ -41,3 +46,13 @@ class ConfigManager():
                 notebooks[task.taskKey] = create_notebook(task.taskKey)
             notebooks[task.taskKey] + create_cell(f"dbutils.jobs.taskValues.set(key = '{task.key}', value = '{task.value}')")
         return notebooks
+
+class JobConfigManager():
+    def __init__(self):
+        self.run_parameters = []
+
+    def add_parameter(self, key, value):
+        self.run_parameters.append(RunParameter(key=key, value=value))
+    
+    def _job_config(self):
+        return {i.key:i.value for i in self.run_parameters}

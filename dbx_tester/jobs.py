@@ -8,8 +8,7 @@ class job_test():
         self.job_id = job_id
         self.config = config
         self.global_config = GlobalConfig()
-
-
+        
         self._transform_notebook()
 
         pass
