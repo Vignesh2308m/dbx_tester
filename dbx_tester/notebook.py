@@ -36,9 +36,9 @@ class notebook_test():
         This function will create the files and folders needed for the test cache
         """
 
-        self.test_cache_path.mkdir(exist_ok=True)
-        self.notebook_dir.mkdir(exist_ok=True)
-        self.task_dir.mkdir(exist_ok=True)
+        self.test_cache_path.mkdir(exist_ok=True, parents=True)
+        self.notebook_dir.mkdir(exist_ok=True, parents=True)
+        self.task_dir.mkdir(exist_ok=True, parents=True)
 
         pass
 
@@ -89,6 +89,8 @@ class notebook_test():
 class notebook_testrunner():
     def __init__(self):
         self.global_config = GlobalConfig()
+        self.cluster_id = self.global_config.CLUSTER_ID
+
 
         self.test_path = Path(self.global_config.TEST_PATH)  
         self.test_cache_path = Path(self.global_config.TEST_CACHE_PATH)
@@ -98,8 +100,7 @@ class notebook_testrunner():
         pass
 
     def _identify_notebooks(self):
-        paths_exclude_cache = [f for f in self.test_path.rglob("*") if '_notebook_test_cache' not in f.parts]
-        self.tests = [f for f in paths_exclude_cache if is_notebook(f)]
+        self.tests = [f for f in self.test_path.rglob("*") if is_notebook(f) and '_notebook_test_cache' not in f.parts]
         pass
 
     def _run_notebooks(self):
@@ -108,12 +109,22 @@ class notebook_testrunner():
         pass
 
     def _identify_tests(self):
-        paths_exclude_cache = [f for f in self.test_cache_path.rglob("*") if '_notebook_test_cache' in f.parts and 'tasks' in f.parts]
-        self.test_cache = [f for f in paths_exclude_cache if is_notebook(f)]
+        self.test_cache = [f for f in self.test_cache_path.rglob("*") if '_notebook_test_cache' in f.parts and 'tasks' not in f.parts and is_notebook(f)]
         pass
 
     def _run_tests(self):
+        for i in self.test_cache:
+            s = submit_run(i.name, self.cluster_id)
+
+            for path in (i.parent /'tasks'/ i.name).iterdir():
+                s.add_task(path.name, path)
+            s.add_task(i.name+'_task',i)
+            s.run()
         pass
 
-    def run(self):        
+    def run(self):  
+        self._identify_notebooks()
+        self._run_notebooks()
+        self._identify_tests()
+        self._run_tests()      
         pass
