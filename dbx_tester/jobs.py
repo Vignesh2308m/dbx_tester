@@ -54,7 +54,7 @@ class job_test():
 
         with open(self.config_dir / f"{self.fn.__name__}.json", "w") as f:
                 json.dump(self.config, f)
-                
+                              
         pass
 
 class job_test_runner():
