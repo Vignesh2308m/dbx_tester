@@ -1,5 +1,6 @@
 from dbx_tester.global_config import GlobalConfig
 from dbx_tester.utils.databricks_api import *
+from pathlib import Path
 
 
 class job_test():
@@ -8,8 +9,30 @@ class job_test():
         self.job_id = job_id
         self.config = config
         self.global_config = GlobalConfig()
-        
-        self._transform_notebook()
+
+        self.current_path = Path(get_notebook_path())
+        self.is_test = '_job_test_cache' not in self.current_path.parts
+
+        if self.is_test:
+            self.test_cache_path = self.global_config.TEST_CACHE_PATH / self.current_path.relative_to(self.global_config.TEST_PATH).parent / '_notebook_test_cache'
+            self.notebook_dir = self.test_cache_path / self.current_path.name
+            
+            self._create_files_and_folders()
+            self._transform_notebook()
+        else:
+            self.test_cache_path = Path(*self.current_path.parts[:self.current_path.parts.index("_notebook_test_cache")+1])
+            self.notebook_dir = self.current_path.parent
+            
+
+        pass
+
+    def _create_files_and_folders(self):
+        """
+        This function will create the files and folders needed for the test cache
+        """
+
+        self.test_cache_path.mkdir(exist_ok=True, parents=True)
+        self.notebook_dir.mkdir(exist_ok=True, parents=True)
 
         pass
 
