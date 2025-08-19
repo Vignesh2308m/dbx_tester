@@ -1,10 +1,11 @@
 import json
 import os
+from pathlib import Path
 
 
 class GlobalConfig:
     def __init__(self):
-        self.config_path = "/Workspace/tmp.json"
+        self.config_path = Path.cwd()
         self._REPO_PATH = None
         self._TEST_PATH = None
         self._TEST_CACHE_PATH = None

@@ -6,11 +6,11 @@ from pyspark.dbutils import DBUtils
 from pyspark.sql import SparkSession
 import base64
 import json
-import boto3
 import uuid
 
 
 from dbx_tester.global_config import GlobalConfig
+
 
 def get_workspace_client():
     w = WorkspaceClient()
