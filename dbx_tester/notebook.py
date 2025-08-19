@@ -10,6 +10,10 @@ class notebook_test():
         self.fn:Callable[..., Any] | Type[Any] = fn
         self.path = path
         self.config:NotebookConfigManager = config
+        
+        if config is not None and not isinstance(config, NotebookConfigManager):
+            raise ValueError("INVALID TEST CASE CONFIG: Add a Notebook config Manager instance")
+        
         self.global_config = GlobalConfig()
         if cluster_id is None:
             self.cluster_id = self.global_config.CLUSTER_ID
@@ -17,17 +21,17 @@ class notebook_test():
             self.cluster_id = cluster_id
 
         self.current_path = Path(get_notebook_path())
-        self.is_test = '_notebook_test_cache' not in self.current_path.parts
+        self.is_test = '_test_cache' not in self.current_path.parts
 
         if self.is_test:
-            self.test_cache_path = self.global_config.TEST_CACHE_PATH / self.current_path.relative_to(self.global_config.TEST_PATH).parent / '_notebook_test_cache'
-            self.notebook_dir = self.test_cache_path / self.current_path.name
+            self.test_cache_path = self.global_config.TEST_CACHE_PATH / self.current_path.relative_to(self.global_config.TEST_PATH).parent / '_test_cache'
+            self.notebook_dir = self.test_cache_path / self.current_path.name / 'test_type=notebook'
             self.task_dir = self.notebook_dir / 'tasks'
 
             self._create_files_and_folders()
             self._transform_notebook()
         else:
-            self.test_cache_path = Path(*self.current_path.parts[:self.current_path.parts.index("_notebook_test_cache")+1])
+            self.test_cache_path = Path(*self.current_path.parts[:self.current_path.parts.index("_test_cache")+1])
             self.notebook_dir = self.current_path.parent
             self.task_dir = self.notebook_dir / 'tasks'
 
@@ -100,7 +104,7 @@ class notebook_testrunner():
         pass
 
     def _identify_notebooks(self):
-        self.tests = [f for f in self.test_path.rglob("*") if is_notebook(f) and '_notebook_test_cache' not in f.parts]
+        self.tests = [f for f in self.test_path.rglob("*") if is_notebook(f) and '_test_cache' not in f.parts]
         pass
 
     def _run_notebooks(self):
@@ -109,17 +113,18 @@ class notebook_testrunner():
         pass
 
     def _identify_tests(self):
-        self.test_cache = [f for f in self.test_cache_path.rglob("*") if '_notebook_test_cache' in f.parts and 'tasks' not in f.parts and is_notebook(f)]
+        self.test_cache = [f for f in self.test_cache_path.rglob("*") if '_test_cache' in f.parts and 'tasks' not in f.parts and is_notebook(f)]
         pass
 
     def _run_tests(self):
+        runs = []
         for i in self.test_cache:
             s = submit_run(i.name, self.cluster_id)
 
             for path in (i.parent /'tasks'/ i.name).iterdir():
                 s.add_task(path.name, path)
             s.add_task(i.name+'_task',i)
-            s.run()
+            runs.append(s.run())
         pass
 
     def run(self):  

@@ -12,11 +12,11 @@ class job_test():
         self.global_config = GlobalConfig()
 
         self.current_path = Path(get_notebook_path())
-        self.is_test = '_job_test_cache' not in self.current_path.parts
+        self.is_test = '_test_cache' not in self.current_path.parts
 
         if self.is_test:
             self.test_cache_path = self.global_config.TEST_CACHE_PATH / self.current_path.relative_to(self.global_config.TEST_PATH).parent / '_test_cache'
-            self.notebook_dir = self.test_cache_path / self.current_path.name
+            self.notebook_dir = self.test_cache_path / self.current_path.name / 'test_type=jobs'
             self.config_dir = self.notebook_dir / 'config'
             
             self._create_files_and_folders()
