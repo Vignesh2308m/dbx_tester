@@ -59,18 +59,27 @@ class job_test():
 
 class job_test_runner():
     def __init__(self):
+        self.global_config = GlobalConfig()
+
+        self.test_path = Path(self.global_config.TEST_PATH)  
+        self.test_cache_path = Path(self.global_config.TEST_CACHE_PATH)
         pass
 
     def _identify_job_tests(self):
+        self.tests = [f for f in self.test_path.rglob("*") if is_notebook(f) and '_job_test_cache' not in f.parts]
         pass
 
     def _run_job_tests(self):
+        for i in self.tests:
+            run_notebook(i)
         pass
 
     def _identify_job_cache(self):
+        self.test_cache = [f for f in self.test_cache_path.rglob("*") if '_job_test_cache' in f.parts and 'tasks' not in f.parts and is_notebook(f)]
         pass
 
     def _run_job_cache(self):
+        #TODO
         pass
 
     def run(self):
