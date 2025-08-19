@@ -52,15 +52,15 @@ class notebook_test():
             for task, notebook in self.config._create_tasks().items():
                 notebook.save_notebook(self.task_dir / self.fn.__name__ / task)
             
-            test_notebook + create_cell(self.config._dbutils_config())
+            test_notebook.add_cell(self.config._dbutils_config())
 
 
         if self.path is not None:
-            test_notebook + create_cell(f"%run {self.path}")
+            test_notebook.add_cell(f"%run {self.path}")
         
-        test_notebook + create_cell(f"%run {self.current_path}")
+        test_notebook.add_cell(f"%run {self.current_path}")
 
-        test_notebook + create_cell(f"{self.fn.__name__}().run()")
+        test_notebook.add_cell(f"{self.fn.__name__}().run()")
 
         test_notebook.save_notebook(self.notebook_dir / self.fn.__name__)
 
