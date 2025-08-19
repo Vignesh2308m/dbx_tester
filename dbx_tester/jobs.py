@@ -4,7 +4,6 @@ from pathlib import Path
 import json
 
 
-
 class job_test():
     def __init__(self, fn, job_id, config):
         self.fn = fn
@@ -16,14 +15,14 @@ class job_test():
         self.is_test = '_job_test_cache' not in self.current_path.parts
 
         if self.is_test:
-            self.test_cache_path = self.global_config.TEST_CACHE_PATH / self.current_path.relative_to(self.global_config.TEST_PATH).parent / '_notebook_test_cache'
+            self.test_cache_path = self.global_config.TEST_CACHE_PATH / self.current_path.relative_to(self.global_config.TEST_PATH).parent / '_test_cache'
             self.notebook_dir = self.test_cache_path / self.current_path.name
             self.config_dir = self.notebook_dir / 'config'
             
             self._create_files_and_folders()
             self._transform_notebook()
         else:
-            self.test_cache_path = Path(*self.current_path.parts[:self.current_path.parts.index("_notebook_test_cache")+1])
+            self.test_cache_path = Path(*self.current_path.parts[:self.current_path.parts.index("_test_cache")+1])
             self.notebook_dir = self.current_path.parent
             self.config_dir = self.notebook_dir / 'config'
 
@@ -46,9 +45,9 @@ class job_test():
         """
         test_notebook = create_notebook(self.fn.__name__)
 
-        test_notebook + create_cell(f"%run {self.current_path}")
+        test_notebook.add_cell(f"%run {self.current_path}")
 
-        test_notebook + create_cell(f"{self.fn.__name__}().run()")
+        test_notebook.add_cell(f"{self.fn.__name__}().run()")
 
         test_notebook.save_notebook(self.notebook_dir / self.fn.__name__)
 
@@ -66,7 +65,7 @@ class job_test_runner():
         pass
 
     def _identify_job_tests(self):
-        self.tests = [f for f in self.test_path.rglob("*") if is_notebook(f) and '_job_test_cache' not in f.parts]
+        self.tests = [f for f in self.test_path.rglob("*") if is_notebook(f) and '_test_cache' not in f.parts]
         pass
 
     def _run_job_tests(self):
@@ -75,7 +74,7 @@ class job_test_runner():
         pass
 
     def _identify_job_cache(self):
-        self.test_cache = [f for f in self.test_cache_path.rglob("*") if '_job_test_cache' in f.parts and 'tasks' not in f.parts and is_notebook(f)]
+        self.test_cache = [f for f in self.test_cache_path.rglob("*") if '_test_cache' in f.parts and 'tasks' not in f.parts and is_notebook(f)]
         pass
 
     def _run_job_cache(self):
