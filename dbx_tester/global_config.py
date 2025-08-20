@@ -5,7 +5,7 @@ from pathlib import Path
 
 class GlobalConfig:
     def __init__(self):
-        self.config_path = Path.cwd() / "dbx_tester_cfg.json"
+        self.config_path = Path('/Workspace/Shared') / "dbx_tester_cfg.json"
         self._REPO_PATH = None
         self._TEST_PATH = None
         self._TEST_CACHE_PATH = None

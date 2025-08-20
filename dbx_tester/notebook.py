@@ -15,11 +15,16 @@ class notebook_test():
             raise ValueError("INVALID TEST CASE CONFIG: Add a Notebook config Manager instance")
         
         self.global_config = GlobalConfig()
+        if self.global_config is None:
+            raise ValueError("INVALID GLOBAL CONFIG: Add a Global Config instance")
+        if self.global_config.TEST_CACHE_PATH is None:
+            self.global_config.TEST_CACHE_PATH = self.global_config.TEST_PATH
+            
         if cluster_id is None:
             self.cluster_id = self.global_config.CLUSTER_ID
         else:
             self.cluster_id = cluster_id
-            
+
         self.current_path = Path(get_notebook_path())
         self.is_test = '_test_cache' not in self.current_path.parts
 
