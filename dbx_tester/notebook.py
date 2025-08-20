@@ -19,7 +19,7 @@ class notebook_test():
             self.cluster_id = self.global_config.CLUSTER_ID
         else:
             self.cluster_id = cluster_id
-
+            
         self.current_path = Path(get_notebook_path())
         self.is_test = '_test_cache' not in self.current_path.parts
 
