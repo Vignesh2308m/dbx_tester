@@ -17,6 +17,7 @@ class notebook_test():
         self.global_config = GlobalConfig()
         if self.global_config is None:
             raise ValueError("INVALID GLOBAL CONFIG: Add a Global Config instance")
+        
         if self.global_config.TEST_CACHE_PATH is None:
             self.global_config.TEST_CACHE_PATH = self.global_config.TEST_PATH
             
