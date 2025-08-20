@@ -1,6 +1,6 @@
 import json
 import os
-from pathlin import Path
+from pathlib import Path
 
 
 class GlobalConfig:
