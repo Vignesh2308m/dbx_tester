@@ -1,94 +1,53 @@
+
 import json
 import os
 from pathlib import Path
+from pydantic import BaseModel, AfterValidator, ValidationError
+from typing import Annotated
 
+def is_valid_path(value:Path) -> Path:
+    if not value.exists():
+        raise ValueError(f"{value} path not exists")
+    if not value.is_dir():
+        raise ValueError(f"{value} is not a directory")
+    return value
 
-class GlobalConfig:
-    def __init__(self):
-        self.config_path = Path.cwd()
-        self._REPO_PATH = None
-        self._TEST_PATH = None
-        self._TEST_CACHE_PATH = None
-        self._LOG_PATH = None
-        self._CLUSTER_ID = None
+def create_if_not_exist(value:Path) -> Path:
+    try:
+        if not value.exists():
+            value.mkdir(parents=True)
+    except Exception as err:
+        raise Exception(f"{value} unable to create the path")
         
-        if not os.path.exists(self.config_path):
-            with open(self.config_path, "w") as f:
-                json.dump({}, f)
 
-    @property
-    def REPO_PATH(self):
-        if os.path.exists(self.config_path):
-            with open(self.config_path, "r") as f:
-                config = json.load(f)
-                return config.get("REPO_PATH")
-        return self._REPO_PATH
+class GlobalConfig(BaseModel):
+    TEST_PATH: Annotated[Path, AfterValidator(is_valid_path)]
+    CLUSTER_ID: str
+    REPO_PATH: Path = None
+    TEST_CACHE_PATH: Annotated[Path, AfterValidator(create_if_not_exist)] = None
+    LOG_PATH: Annotated[Path, AfterValidator(create_if_not_exist)] = None
 
-    @REPO_PATH.setter
-    def REPO_PATH(self, value):
-        self._REPO_PATH = value
-        self.save()
 
-    @property
-    def TEST_PATH(self):
-        if os.path.exists(self.config_path):
-            with open(self.config_path, "r") as f:
-                config = json.load(f)
-                return config.get("TEST_PATH")
-        return self._TEST_PATH
-
-    @TEST_PATH.setter
-    def TEST_PATH(self, value):
-        self._TEST_PATH = value
-        self.save()
-
-    @property
-    def TEST_CACHE_PATH(self):
-        if os.path.exists(self.config_path):
-            with open(self.config_path, "r") as f:
-                config = json.load(f)
-                return config.get("TEST_CACHE_PATH")
-        return self._TEST_CACHE_PATH
-
-    @TEST_CACHE_PATH.setter
-    def TEST_CACHE_PATH(self, value):
-        self._TEST_CACHE_PATH = value
-        self.save()
-
-    @property
-    def LOG_PATH(self):
-        if os.path.exists(self.config_path):
-            with open(self.config_path, "r") as f:
-                config = json.load(f)
-                return config.get("LOG_PATH")
-        return self._LOG_PATH
-
-    @LOG_PATH.setter
-    def LOG_PATH(self, value):
-        self._LOG_PATH = value
-        self.save()
     
-    def save(self):
-        config = {
-            "REPO_PATH": self._REPO_PATH,
-            "TEST_PATH": self._TEST_PATH,
-            "TEST_CACHE_PATH": self._TEST_CACHE_PATH,
-            "LOG_PATH": self._LOG_PATH
-        }
-        with open(self.config_path, "w") as f:
-            json.dump(config, f)
+class GlobalConfigManager:
+    def __init__(self):
+        self.config_path = Path("/Workspace/Shared/dbx_tester_cfg.json")
+
     
-    @property
-    def CLUSTER_ID(self):
-        if os.path.exists(self.config_path):
-            with open(self.config_path, "r") as f:
-                config = json.load(f)
-                return config.get("CLUSTER_ID")
-        return self._CLUSTER_ID
-    
-    @CLUSTER_ID.setter
-    def CLUSTER_ID(self, value):
-        self._CLUSTER_ID = value
-        self.save()
-    
-    
+    def add_config(self, test_path, cluster_id, repo_path = None, test_cache_path =None, log_path=None):
+        try:
+            with open(self.config_path, 'w') as f:
+
+                cfg = GlobalConfig(
+                    TEST_PATH=test_path,
+                    CLUSTER_ID=cluster_id,
+                    REPO_PATH = repo_path,
+                    TEST_CACHE_PATH= test_cache_path,
+                    LOG_PATH= log_path   
+                )
+                glb_config = json.load(f)
+                glb_config[cfg.TEST_PATH] = cfg.model_dump()
+                json.dump(glb_config, f, indent=4)
+
+        except Exception as err:
+            pass
