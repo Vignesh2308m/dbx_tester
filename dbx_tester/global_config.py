@@ -2,7 +2,7 @@
 import json
 import os
 from pathlib import Path
-from pydantic import BaseModel
+from dataclasses import dataclass, asdict
 from typing import Optional
 
 from dbx_tester.utils.databricks_api import get_notebook_path
@@ -25,8 +25,8 @@ def validate(value, validator):
     validator(value)
     return value
         
-
-class GlobalConfig(BaseModel):
+@dataclass
+class GlobalConfig:
     TEST_PATH: str
     CLUSTER_ID: str
     REPO_PATH: Optional[str] = None
@@ -63,7 +63,7 @@ class GlobalConfigManager:
             
             with open(self.config_path, 'r+') as f:
                 glb_config = json.load(f)
-                glb_config[cfg.TEST_PATH] = cfg.dict()
+                glb_config[cfg.TEST_PATH] = asdict(cfg)
             
             with open(self.config_path, 'w') as f:
                 json.dump(glb_config, f, indent=4)
