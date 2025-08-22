@@ -6,17 +6,20 @@ from collections.abc import Callable
 from typing import Type, Any
 
 class notebook_test():
-    def __init__(self, fn, path=None, config=None, cluster_id = None):
+    def __init__(self, fn, notebook_path=None, config=None, cluster_id = None):
         self.fn:Callable[..., Any] | Type[Any] = fn
-        self.path = path
+        self.notebook_path = notebook_path
         self.config:NotebookConfigManager = config
+        self.global_config = GlobalConfigManager()
         
         if config is not None and not isinstance(config, NotebookConfigManager):
             raise ValueError("INVALID TEST CASE CONFIG: Add a Notebook config Manager instance")
-
-
         
-        self.global_config = GlobalConfigManager()
+        if self.notebook_path is not None and (
+            not Path(self.notebook_path).exists() and 
+            not (Path(self.global_config.REPO_PATH) / Path(self.notebook_path)).exists()):
+            raise ValueError(f"INVALID NOTEBOOK PATH: {self.notebook_path} is invalid or not exists")
+            
         if cluster_id is None:
             self.cluster_id = self.global_config.CLUSTER_ID
         else:
@@ -61,8 +64,8 @@ class notebook_test():
             test_notebook.add_cell(self.config._dbutils_config())
 
 
-        if self.path is not None:
-            test_notebook.add_cell(f"%run {self.path}")
+        if self.notebook_path is not None:
+            test_notebook.add_cell(f"%run {self.notebook_path}")
         
         test_notebook.add_cell(f"%run {self.current_path}")
 
