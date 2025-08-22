@@ -13,6 +13,8 @@ class notebook_test():
         
         if config is not None and not isinstance(config, NotebookConfigManager):
             raise ValueError("INVALID TEST CASE CONFIG: Add a Notebook config Manager instance")
+
+
         
         self.global_config = GlobalConfigManager()
         if cluster_id is None:
