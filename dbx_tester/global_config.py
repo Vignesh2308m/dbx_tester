@@ -79,6 +79,7 @@ class GlobalConfigManager:
         for i in glb_config.keys():
             if curr_path.is_relative_to(i):
                 self._config = glb_config.get(i)
+                break
         else:
             raise Exception("No active config found")
     
