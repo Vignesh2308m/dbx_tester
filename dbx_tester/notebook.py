@@ -17,8 +17,12 @@ class notebook_test():
         
         if self.notebook_path is not None and (
             not Path(self.notebook_path).exists() and 
-            not (Path(self.global_config.REPO_PATH) / Path(self.notebook_path)).exists()):
+            not (self.global_config.REPO_PATH is None or
+                 (Path(self.global_config.REPO_PATH) / Path(self.notebook_path)).exists())):
             raise ValueError(f"INVALID NOTEBOOK PATH: {self.notebook_path} is invalid or not exists")
+        
+        if (Path(self.global_config.REPO_PATH) / Path(self.notebook_path)).exists():
+            self.notebook_path = (Path(self.global_config.REPO_PATH) / Path(self.notebook_path)).as_posix()
             
         if cluster_id is None:
             self.cluster_id = self.global_config.CLUSTER_ID
