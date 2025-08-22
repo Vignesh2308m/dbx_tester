@@ -1,4 +1,4 @@
-from dbx_tester.global_config import GlobalConfig
+from dbx_tester.global_config import GlobalConfigManager
 from dbx_tester.config_manager import NotebookConfigManager
 from dbx_tester.utils.databricks_api import get_notebook_path, create_cell, create_notebook, submit_run, is_notebook, run_notebook
 from pathlib import Path
@@ -14,7 +14,7 @@ class notebook_test():
         if config is not None and not isinstance(config, NotebookConfigManager):
             raise ValueError("INVALID TEST CASE CONFIG: Add a Notebook config Manager instance")
         
-        self.global_config = GlobalConfig()
+        self.global_config = GlobalConfigManager()
         if cluster_id is None:
             self.cluster_id = self.global_config.CLUSTER_ID
         else:
@@ -92,7 +92,7 @@ class notebook_test():
 
 class notebook_testrunner():
     def __init__(self):
-        self.global_config = GlobalConfig()
+        self.global_config = GlobalConfigManager()
         self.cluster_id = self.global_config.CLUSTER_ID
 
 

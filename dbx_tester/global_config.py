@@ -93,22 +93,32 @@ class GlobalConfigManager:
         
     @property
     def TEST_PATH(self):
+        if self._config == {}:
+            self._load_config()
         return self._config['TEST_PATH']
     
     @property
     def CLUSTER_ID(self):
+        if self._config == {}:
+            self._load_config()
         return self._config['CLUSTER_ID']
     
     @property
     def REPO_PATH(self):
+        if self._config == {}:
+            self._load_config()
         return self._config['REPO_PATH']
     
     @property
     def TEST_CACHE_PATH(self):
+        if self._config == {}:
+            self._load_config()
         return self._config['TEST_CACHE_PATH']
     
     @property
     def LOG_PATH(self):
+        if self._config == {}:
+            self._load_config()
         return self._config['LOG_PATH']
     
 
