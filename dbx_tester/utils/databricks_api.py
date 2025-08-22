@@ -8,10 +8,6 @@ import base64
 import json
 import uuid
 
-
-from dbx_tester.global_config import GlobalConfig
-
-
 def get_workspace_client():
     w = WorkspaceClient()
     return w

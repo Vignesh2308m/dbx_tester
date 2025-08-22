@@ -2,33 +2,36 @@
 import json
 import os
 from pathlib import Path
-from pydantic import BaseModel, AfterValidator, ValidationError
-from typing import Annotated, Optional
+from pydantic import BaseModel
+from typing import Optional
 
 from dbx_tester.utils.databricks_api import get_notebook_path
 
 
 def is_valid_path(value:Path) -> Path:
-    if not value.exists():
+    if not Path(value).exists():
         raise ValueError(f"{value} path not exists")
-    if not value.is_dir():
+    if not Path(value).is_dir():
         raise ValueError(f"{value} is not a directory")
-    return value
 
 def create_if_not_exist(value:Path) -> Path:
     try:
-        if not value.exists():
-            value.mkdir(parents=True)
+        if not Path(value).exists():
+            Path(value).mkdir(parents=True)
     except Exception as err:
         raise Exception(f"{value} unable to create the path")
+
+def validate(value, validator):
+    validator(value)
+    return value
         
 
 class GlobalConfig(BaseModel):
-    TEST_PATH: Annotated[Path, AfterValidator(is_valid_path)]
+    TEST_PATH: str
     CLUSTER_ID: str
-    REPO_PATH: Optional[Path] = None
-    TEST_CACHE_PATH: Annotated[Path, AfterValidator(create_if_not_exist)] = None
-    LOG_PATH: Annotated[Path, AfterValidator(create_if_not_exist)] = None
+    REPO_PATH: Optional[str] = None
+    TEST_CACHE_PATH: str  = None
+    LOG_PATH: str = None
 
 
     
@@ -49,19 +52,18 @@ class GlobalConfigManager:
 
             if log_path == None:
                 log_path = test_path
-
-
-            with open(self.config_path, 'r+') as f:
-                
-                cfg = GlobalConfig(
-                    TEST_PATH= Path(test_path),
+            
+            cfg = GlobalConfig(
+                    TEST_PATH= validate(test_path, is_valid_path),
                     CLUSTER_ID= cluster_id,
                     REPO_PATH = repo_path,
-                    TEST_CACHE_PATH= Path(test_cache_path),
-                    LOG_PATH= Path(log_path)   
+                    TEST_CACHE_PATH= validate(test_cache_path, create_if_not_exist),
+                    LOG_PATH= validate(log_path, create_if_not_exist)   
                 )
+            
+            with open(self.config_path, 'r+') as f:
                 glb_config = json.load(f)
-                glb_config[cfg.TEST_PATH.as_posix()] = cfg.model_dump()
+                glb_config[cfg.TEST_PATH] = cfg.dict()
             
             with open(self.config_path, 'w') as f:
                 json.dump(glb_config, f, indent=4)
