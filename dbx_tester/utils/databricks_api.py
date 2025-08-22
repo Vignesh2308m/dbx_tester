@@ -61,7 +61,7 @@ class create_notebook:
             "nbformat_minor": 0
         }
     def add_cell(self, cell):
-        self._notebook_dict['cells'].append(cell)
+        self._notebook_dict['cells'].append(create_cell(cell))
 
     def save_notebook(self, path):
 
