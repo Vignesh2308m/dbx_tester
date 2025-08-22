@@ -5,7 +5,7 @@ from pathlib import Path
 from pydantic import BaseModel, AfterValidator, ValidationError
 from typing import Annotated, Optional
 
-# from dbx_tester.utils.databricks_api import get_notebook_path
+from dbx_tester.utils.databricks_api import get_notebook_path
 
 
 def is_valid_path(value:Path) -> Path:
@@ -34,7 +34,7 @@ class GlobalConfig(BaseModel):
     
 class GlobalConfigManager:
     def __init__(self):
-        self.config_path = Path("./Workspace/Shared/dbx_tester_cfg.json")
+        self.config_path = Path("/Workspace/Shared/dbx_tester_cfg.json")
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
         if not self.config_path.exists():
             with open(self.config_path, 'w') as f:
