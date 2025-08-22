@@ -64,7 +64,7 @@ class notebook_test():
         
         test_notebook.add_cell(f"%run {self.current_path}")
 
-        test_notebook.add_cell(f"{self.fn.__name__}().run()")
+        test_notebook.add_cell(f"{self.fn.__name__}.run()")
 
         test_notebook.save_notebook((self.notebook_dir / self.fn.__name__).as_posix())
 
