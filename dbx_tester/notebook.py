@@ -103,33 +103,26 @@ class notebook_test():
 
 
 class notebook_testrunner():
-    def __init__(self):
+    def __init__(self, test_path):
+        if not Path(test_path).exists():
+            raise ValueError(f"INVALID TEST PATH: Test path not exists {test_path}")
+        
         self.global_config = GlobalConfigManager()
+        self.global_config._load_config_from_test_path(test_path=test_path)
+
         self.cluster_id = self.global_config.CLUSTER_ID
-
-
         self.test_path = Path(self.global_config.TEST_PATH)  
         self.test_cache_path = Path(self.global_config.TEST_CACHE_PATH)
 
-        self.tests = []
-        self.test_cache = []
-        pass
-
-    def _identify_notebooks(self):
         self.tests = [f for f in self.test_path.rglob("*") if is_notebook(f) and '_test_cache' not in f.parts]
-        pass
+        self.test_cache = [f for f in self.test_cache_path.rglob("*") if '_test_cache' in f.parts and 'tasks' not in f.parts and is_notebook(f)]
 
-    def _run_notebooks(self):
+    def run(self):  
+        runs = []
+
         for i in self.tests:
             run_notebook(i)
-        pass
 
-    def _identify_tests(self):
-        self.test_cache = [f for f in self.test_cache_path.rglob("*") if '_test_cache' in f.parts and 'tasks' not in f.parts and is_notebook(f)]
-        pass
-
-    def _run_tests(self):
-        runs = []
         for i in self.test_cache:
             s = submit_run(i.name, self.cluster_id)
 
@@ -137,11 +130,5 @@ class notebook_testrunner():
                 s.add_task(path.name, path)
             s.add_task(i.name+'_task',i)
             runs.append(s.run())
-        pass
-
-    def run(self):  
-        self._identify_notebooks()
-        self._run_notebooks()
-        self._identify_tests()
-        self._run_tests()      
+           
         pass
