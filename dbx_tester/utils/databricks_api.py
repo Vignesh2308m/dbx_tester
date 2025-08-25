@@ -12,25 +12,6 @@ def get_workspace_client():
     w = WorkspaceClient()
     return w
 
-def decode_notebook(path):
-
-    w = get_workspace_client()
-
-    notebook_content = w.workspace.export(
-        path= path,
-        format=workspace.ExportFormat.JUPYTER
-    )
-
-    decoded_bytes = base64.b64decode(notebook_content.content)
-
-    decoded_string = decoded_bytes.decode('utf-8')
-
-    notebook_dict = json.loads(decoded_string)
-    
-    return notebook_dict
-
-
-
 class create_notebook:
     def __init__(self, name:str):
         self.workspace_client = get_workspace_client()
@@ -77,8 +58,6 @@ class create_notebook:
             overwrite=True,
             format=workspace.ExportFormat.JUPYTER
         )
-
-    
 
 def create_cell(code:str):
     return {
