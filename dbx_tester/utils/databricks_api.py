@@ -111,8 +111,14 @@ def run_notebook(path, params={}):
     dbutils.notebook.run(path=path, timeout_seconds=0, arguments=params)
 
 def validate_cluster(cluster_name):
-    #TODO
-    pass
+    w = get_workspace_client()
+    if cluster_name is None:
+        return None
+    for cluster in w.clusters.list():
+        if cluster.cluster_name == cluster_name:
+            return cluster.cluster_id
+    else:
+        raise ValueError(f"CLUSTER NOT FOUND: Cluster name {cluster_name} not found")
 
 class submit_run:
     def __init__(self, name, cluster_id):
