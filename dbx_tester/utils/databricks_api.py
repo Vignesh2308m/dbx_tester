@@ -100,7 +100,7 @@ def validate_cluster(cluster_name):
         raise ValueError(f"CLUSTER NOT FOUND: Cluster name {cluster_name} not found")
 
 class submit_run:
-    def __init__(self, name, cluster_id):
+    def __init__(self, name, cluster_id = None):
         self.name = name
         self.tasks = []
         self.cluster_id = cluster_id
@@ -119,4 +119,4 @@ class submit_run:
         return self.workspace_client.jobs.submit(
             run_name = self.name,
             tasks = self.tasks
-        ).result()
+        )
