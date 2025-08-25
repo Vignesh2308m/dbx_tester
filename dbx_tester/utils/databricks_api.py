@@ -110,6 +110,10 @@ def run_notebook(path, params={}):
     dbutils = DBUtils(SparkSession.builder.getOrCreate())
     dbutils.notebook.run(path=path, timeout_seconds=0, arguments=params)
 
+def validate_cluster(cluster_name):
+    #TODO
+    pass
+
 class submit_run:
     def __init__(self, name, cluster_id):
         self.name = name
