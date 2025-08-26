@@ -38,14 +38,14 @@ class notebook_test():
         if self.is_test:
             self.test_cache_path = self.global_config.TEST_CACHE_PATH / self.current_path.relative_to(self.global_config.TEST_PATH).parent / '_test_cache'
             self.notebook_dir = self.test_cache_path / self.current_path.name / 'test_type=notebook'
-            self.task_dir = self.notebook_dir / 'tasks'
+            self.task_dir = self.notebook_dir / 'tasks' / self.fn.__name__
 
             self._create_files_and_folders()
             self._transform_notebook()
         else:
             self.test_cache_path = Path(*self.current_path.parts[:self.current_path.parts.index("_test_cache")+1])
             self.notebook_dir = self.current_path.parent
-            self.task_dir = self.notebook_dir / 'tasks'
+            self.task_dir = self.notebook_dir / 'tasks' / self.fn.__name__
 
     def _create_files_and_folders(self):
         """
@@ -82,14 +82,24 @@ class notebook_test():
 
         pass
 
-    def run(self):
-        try:
-            self.fn()
-        except AssertionError as err:
-            print("Failed due to assertion Error")
-        except Exception as err:
-            print("Try Debug mode")
-    
+    def run(self, debug=False):
+        if debug:
+            s = submit_run(self.fn.__name__, self.cluster_id)
+
+            for path in (self.task_dir / self.fn.__name__).iterdir():
+                s.add_task(path.name, path)
+            
+            s.add_task(self.fn.__name__+'_task',self.notebook_dir / self.fn.__name__)
+            s.run()
+            pass
+        else:
+            try:
+                self.fn()
+            except AssertionError as err:
+                print("Failed due to assertion Error")
+            except Exception as err:
+                print("Try Debug mode")
+        pass
 
 
 class notebook_testrunner():
