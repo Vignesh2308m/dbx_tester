@@ -82,7 +82,7 @@ class notebook_test():
 
         pass
 
-    def run(self, debug=False):
+    def run(self):
         try:
             self.fn()
         except AssertionError as err:
