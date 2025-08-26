@@ -83,22 +83,12 @@ class notebook_test():
         pass
 
     def run(self, debug=False):
-        if debug:
-            s = submit_run(self.fn.__name__, self.cluster_id)
-
-            for path in (self.task_dir / self.fn.__name__).iterdir():
-                s.add_task(path.name, path)
-            
-            s.add_task(self.fn.__name__+'_task',self.notebook_dir / self.fn.__name__)
-            s.run()
-            pass
-        else:
-            try:
-                self.fn()
-            except AssertionError as err:
-                print("Failed due to assertion Error")
-            except Exception as err:
-                print("Try Debug mode")
+        try:
+            self.fn()
+        except AssertionError as err:
+            print("Failed due to assertion Error")
+        except Exception as err:
+            print("Try Debug mode")
         pass
 
 
