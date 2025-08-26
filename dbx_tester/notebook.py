@@ -86,7 +86,7 @@ class notebook_test():
         if debug:
             s = submit_run(self.fn.__name__, self.cluster_id)
 
-            for path in (self.task_dir / self.fn.__name__).iterdir():
+            for path in self.task_dir.iterdir():
                 s.add_task(path.name, path)
             
             s.add_task(self.fn.__name__+'_task',self.notebook_dir / self.fn.__name__)
