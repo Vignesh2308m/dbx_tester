@@ -45,7 +45,7 @@ class GlobalConfigManager:
                 print("Writed")
         self._config = {}
 
-    def add_config(self, test_path, cluster_id, repo_path = None, test_cache_path =None, log_path=None):
+    def add_config(self, test_path, cluster_id = None, repo_path = None, test_cache_path =None, log_path=None):
         try:
             if test_cache_path == None:
                 test_cache_path = test_path

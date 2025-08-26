@@ -38,14 +38,14 @@ class notebook_test():
         if self.is_test:
             self.test_cache_path = self.global_config.TEST_CACHE_PATH / self.current_path.relative_to(self.global_config.TEST_PATH).parent / '_test_cache'
             self.notebook_dir = self.test_cache_path / self.current_path.name / 'test_type=notebook'
-            self.task_dir = self.notebook_dir / 'tasks'
+            self.task_dir = self.notebook_dir / 'tasks' / self.fn.__name__
 
             self._create_files_and_folders()
             self._transform_notebook()
         else:
             self.test_cache_path = Path(*self.current_path.parts[:self.current_path.parts.index("_test_cache")+1])
             self.notebook_dir = self.current_path.parent
-            self.task_dir = self.notebook_dir / 'tasks'
+            self.task_dir = self.notebook_dir / 'tasks' / self.fn.__name__
 
     def _create_files_and_folders(self):
         """
