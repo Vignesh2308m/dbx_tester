@@ -83,6 +83,8 @@ def get_notebook_path():
 
 def is_notebook(path):
     w = get_workspace_client()
+    if path.endswith(".ipynb"):
+        path = path.split(".")[0]
     return w.workspace.get_status(path=path).object_type == ObjectType.NOTEBOOK
 
 def run_notebook(path, params={}):

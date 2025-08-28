@@ -127,21 +127,21 @@ class notebook_testrunner():
         self.test_path = Path(self.global_config.TEST_PATH)  
         self.test_cache_path = Path(self.global_config.TEST_CACHE_PATH)
 
-        self.tests = [f for f in self.test_path.rglob("*") if is_notebook(f) and '_test_cache' not in f.parts]
-        self.test_cache = [f for f in self.test_cache_path.rglob("*") if '_test_cache' in f.parts and 'tasks' not in f.parts and is_notebook(f)]
+        self.tests = [f for f in self.test_path.rglob("*") if is_notebook(f.as_posix()) and '_test_cache' not in f.parts]
+        self.test_cache = [f for f in self.test_cache_path.rglob("*") if '_test_cache' in f.parts and 'tasks' not in f.parts and is_notebook(f.as_posix())]
 
     def run(self):  
         runs = []
 
         for i in self.tests:
-            run_notebook(i)
+            run_notebook(i.as_posix().split(".")[0])
 
         for i in self.test_cache:
             s = submit_run(i.name, self.cluster_id)
 
             for path in (i.parent /'tasks'/ i.name).iterdir():
-                s.add_task(path.name, path)
-            s.add_task(i.name+'_task',i)
+                s.add_task(path.name, path.as_posix().split(".")[0])
+            s.add_task(i.name+'_task',i.as_posix().split(".")[0])
             runs.append(s.run())
            
         pass
