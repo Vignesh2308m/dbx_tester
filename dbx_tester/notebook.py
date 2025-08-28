@@ -126,6 +126,7 @@ class notebook_testrunner():
         self.global_config._load_config_from_test_path(test_path=test_path)
 
         self.cluster_id = self.global_config.CLUSTER_ID
+        
         self.test_path = Path(self.global_config.TEST_PATH)  
         self.test_cache_path = Path(self.global_config.TEST_CACHE_PATH)
 
