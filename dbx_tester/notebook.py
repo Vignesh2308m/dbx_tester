@@ -89,6 +89,8 @@ class notebook_test():
         trigger_run = get_param("trigger_run")
         if trigger_run is not None and trigger_run != "true":
             raise ValueError("Invalid trigger run param")
+        
+        print(trigger_run)
 
         if debug and trigger_run is None:
             s = submit_run(self.fn.__name__, self.cluster_id)
@@ -143,5 +145,4 @@ class notebook_testrunner():
                 s.add_task(path.name, path.as_posix().split(".")[0], params={"trigger_run": "true"})
             s.add_task(i.name+'_task',i.as_posix().split(".")[0], params={"trigger_run": "true"})
             runs.append(s.run())
-           
         pass
