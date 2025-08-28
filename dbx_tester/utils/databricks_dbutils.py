@@ -8,6 +8,6 @@ def run_notebook(path, params={}):
 def get_param(param):
     try:
         dbutils = DBUtils(SparkSession.builder.getOrCreate())
-        return dbutils.widgets.getAll(param)
+        return dbutils.widgets.get(param)
     except Exception as e:
         return None
