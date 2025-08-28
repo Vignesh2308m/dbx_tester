@@ -1,9 +1,12 @@
 from dbx_tester.global_config import GlobalConfigManager
 from dbx_tester.config_manager import NotebookConfigManager
 from dbx_tester.utils.databricks_api import get_notebook_path, create_cell, create_notebook, submit_run, is_notebook, run_notebook
+from dbx_tester.utils.databricks_dbutils import get_param
+
 from pathlib import Path
 from collections.abc import Callable
 from typing import Type, Any
+from datetime import datetime
 
 class notebook_test():
     def __init__(self, fn, notebook_path=None, config=None, cluster_id = None):
@@ -66,7 +69,7 @@ class notebook_test():
 
         if self.config is not None:
             for task, notebook in self.config._create_tasks().items():
-                notebook.save_notebook(self.task_dir / self.fn.__name__ / task)
+                notebook.save_notebook(self.task_dir / task)
             
             test_notebook.add_cell(self.config._dbutils_config())
 
@@ -83,13 +86,33 @@ class notebook_test():
         pass
 
     def run(self, debug=False):
-        try:
-            self.fn()
-        except AssertionError as err:
-            print("Failed due to assertion Error")
-        except Exception as err:
-            print("Try Debug mode")
-        pass
+        trigger_run = get_param("trigger_run")
+        if trigger_run is not None and trigger_run != "true":
+            raise ValueError("Invalid trigger run param")
+
+        if debug and trigger_run is None:
+            s = submit_run(self.fn.__name__, self.cluster_id)
+
+            for path in self.task_dir.iterdir():
+                s.add_task(path.name, path.as_posix())
+            
+            s.add_task(self.fn.__name__+'_task' , (self.notebook_dir / self.fn.__name__).as_posix())
+            s.run()
+
+        elif debug and trigger_run is not None:
+            print("Unable to execute debug in triggered mode")
+
+        elif not debug and trigger_run is not None:
+            try:
+                self.fn()
+            except AssertionError as err:
+                print("Failed due to assertion Error")
+            except Exception as err:
+                print("Test Failed")
+
+        else:
+            print("Unable to execute standalone test without debug mode. try set debug = True")
+        
 
 
 class notebook_testrunner():
