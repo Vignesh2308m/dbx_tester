@@ -94,9 +94,9 @@ class notebook_test():
             s = submit_run(self.fn.__name__, self.cluster_id)
 
             for path in self.task_dir.iterdir():
-                s.add_task(path.name, path.as_posix())
+                s.add_task(path.name, path.as_posix(),params={"trigger_run": "true"})
             
-            s.add_task(self.fn.__name__+'_task' , (self.notebook_dir / self.fn.__name__).as_posix())
+            s.add_task(self.fn.__name__+'_task' , (self.notebook_dir / self.fn.__name__).as_posix(),params={"trigger_run": "true"})
             s.run()
 
         elif debug and trigger_run is not None:
