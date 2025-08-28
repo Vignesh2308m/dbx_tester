@@ -108,11 +108,11 @@ class submit_run:
         self.cluster_id = cluster_id
         self.workspace_client = get_workspace_client()
     
-    def add_task(self, task_key, notebook_path):
+    def add_task(self, task_key, notebook_path, params = {}):
         self.tasks.append(
             jobs.SubmitTask(
                 existing_cluster_id=self.cluster_id,
-                notebook_task=jobs.NotebookTask(notebook_path=notebook_path),
+                notebook_task=jobs.NotebookTask(notebook_path=notebook_path, base_parameters=params),
                 task_key=task_key,
             )
         )

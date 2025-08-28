@@ -134,14 +134,14 @@ class notebook_testrunner():
         runs = []
 
         for i in self.tests:
-            run_notebook(i.as_posix().split(".")[0])
+            run_notebook(i.as_posix().split(".")[0], params={"trigger_run": "true"})
 
         for i in self.test_cache:
             s = submit_run(i.name, self.cluster_id)
 
             for path in (i.parent /'tasks'/ i.name).iterdir():
-                s.add_task(path.name, path.as_posix().split(".")[0])
-            s.add_task(i.name+'_task',i.as_posix().split(".")[0])
+                s.add_task(path.name, path.as_posix().split(".")[0], params={"trigger_run": "true"})
+            s.add_task(i.name+'_task',i.as_posix().split(".")[0], params={"trigger_run": "true"})
             runs.append(s.run())
            
         pass
