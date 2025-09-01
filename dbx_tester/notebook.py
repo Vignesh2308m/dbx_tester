@@ -129,19 +129,21 @@ class notebook_testrunner():
         self.test_cache_path = Path(self.global_config.TEST_CACHE_PATH)
 
         self.tests = [f for f in self.test_path.rglob("*") if is_notebook(f.as_posix()) and '_test_cache' not in f.parts]
-        self.test_cache = [f for f in self.test_cache_path.rglob("*") if '_test_cache' in f.parts and 'tasks' not in f.parts and is_notebook(f.as_posix())]
+        self.test_cache = [f for f in self.test_cache_path.rglob("*") if 'test_type=notebook' in f.parts and 'tasks' not in f.parts and is_notebook(f.as_posix())]
 
     def run(self):  
         runs = []
 
         for i in self.tests:
             run_notebook(i.as_posix().split(".")[0], params={"trigger_run": "true"})
+        
+        print(self.test_cache)
 
-        for i in self.test_cache:
-            s = submit_run(i.name, self.cluster_id)
+        # for i in self.test_cache:
+        #     s = submit_run(i.name, self.cluster_id)
 
-            for path in (i.parent /'tasks'/ i.name).iterdir():
-                s.add_task(path.name, path.as_posix().split(".")[0], params={"trigger_run": "true"})
-            s.add_task(i.name+'_task',i.as_posix().split(".")[0], params={"trigger_run": "true"})
-            runs.append(s.run())
-        pass
+        #     for path in (i.parent /'tasks'/ i.name).iterdir():
+        #         s.add_task(path.name, path.as_posix().split(".")[0], params={"trigger_run": "true"})
+        #     s.add_task(i.name+'_task',i.as_posix().split(".")[0], params={"trigger_run": "true"})
+        #     runs.append(s.run())
+        # pass
