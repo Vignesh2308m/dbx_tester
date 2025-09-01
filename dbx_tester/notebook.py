@@ -140,9 +140,9 @@ class notebook_testrunner():
         print(self.test_cache)
 
         for i in self.test_cache:
-            s = submit_run(i.name, self.cluster_id)
+            s = submit_run(i.name.split(".")[0], self.cluster_id)
 
-            for path in (i.parent /'tasks'/ i.name).iterdir():
+            for path in (i.parent /'tasks'/ i.name.split(".")[0]).iterdir():
                 s.add_task(path.name, path.as_posix().split(".")[0], params={"trigger_run": "true"})
             s.add_task(i.name+'_task',i.as_posix().split(".")[0], params={"trigger_run": "true"})
             runs.append(s.run())
