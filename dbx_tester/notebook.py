@@ -10,6 +10,21 @@ from datetime import datetime
 
 class notebook_test():
     def __init__(self, fn, notebook_path=None, config=None, cluster_id = None):
+        """
+        Initializes a notebook test.
+
+        Args:
+            fn (Callable[..., Any] | Type[Any]):
+                The function or type to test.
+            notebook_path (str, optional): 
+                Path to the notebook.
+            config (NotebookConfigManager, optional): 
+                Configuration manager for the notebook.
+            cluster_id (str, optional): 
+                Cluster ID for the test.
+        Resulsts:
+            notebook_test object
+        """
         self.fn:Callable[..., Any] | Type[Any] = fn
         self.notebook_path = notebook_path
         self.config:NotebookConfigManager = config
@@ -52,18 +67,15 @@ class notebook_test():
 
     def _create_files_and_folders(self):
         """
-        This function will create the files and folders needed for the test cache
+        Creates the files and folders needed for the test cache.
         """
-
         self.test_cache_path.mkdir(exist_ok=True, parents=True)
         self.notebook_dir.mkdir(exist_ok=True, parents=True)
         self.task_dir.mkdir(exist_ok=True, parents=True)
 
-        pass
-
     def _transform_notebook(self):
         """
-        This function will transform the notebook to be run in the test cache
+        Transforms the notebook to be run in the test cache.
         """
         test_notebook = create_notebook(self.fn.__name__)
 
@@ -72,7 +84,6 @@ class notebook_test():
                 notebook.save_notebook(self.task_dir / task)
             
             test_notebook.add_cell(self.config._dbutils_config())
-
 
         if self.notebook_path is not None:
             test_notebook.add_cell(f"%run {self.notebook_path}")
@@ -83,9 +94,13 @@ class notebook_test():
 
         test_notebook.save_notebook((self.notebook_dir / self.fn.__name__).as_posix())
 
-        pass
-
     def run(self, debug=False):
+        """
+        Runs the notebook test.
+
+        Args:
+            debug (bool): If True, run in debug mode.
+        """
         trigger_run = get_param("trigger_run")
         if trigger_run is not None and trigger_run != "true":
             raise ValueError("Invalid trigger run param")
@@ -114,9 +129,16 @@ class notebook_test():
             print("Unable to execute standalone test without debug mode. try set debug = True")
         
 
-
 class notebook_testrunner():
     def __init__(self, test_path):
+        """
+        Initializes a notebook test runner.
+
+        Args:
+            test_path (str): Path to the test directory.
+        Results:
+            notebook_testrunner object
+        """
         if not Path(test_path).exists():
             raise ValueError(f"INVALID TEST PATH: Test path not exists {test_path}")
         
@@ -132,6 +154,9 @@ class notebook_testrunner():
         self.test_cache = [f for f in self.test_cache_path.rglob("*") if 'test_type=notebook' in f.parts and 'tasks' not in f.parts and is_notebook(f.as_posix())]
 
     def run(self):  
+        """
+        Runs all notebook tests.
+        """
         runs = []
 
         for i in self.tests:
@@ -146,4 +171,3 @@ class notebook_testrunner():
                 s.add_task(path.name.split(".")[0], path.as_posix().split(".")[0], params={"trigger_run": "true"})
             s.add_task(i.name.split(".")[0]+'_task',i.as_posix().split(".")[0], params={"trigger_run": "true"})
             runs.append(s.run())
-        pass
