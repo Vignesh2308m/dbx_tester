@@ -1,6 +1,6 @@
 from dbx_tester.global_config import GlobalConfigManager
 from dbx_tester.config_manager import NotebookConfigManager
-from dbx_tester.utils.databricks_api import get_notebook_path, create_cell, create_notebook, submit_run, is_notebook, run_notebook
+from dbx_tester.utils.databricks_api import get_notebook_path, create_notebook, submit_run, is_notebook, run_notebook
 from dbx_tester.utils.databricks_dbutils import get_param
 
 from pathlib import Path

@@ -4,9 +4,11 @@ from databricks.sdk.service.workspace import ObjectType
 
 from pyspark.dbutils import DBUtils
 from pyspark.sql import SparkSession
+from pathlib import Path
 import base64
 import json
 import uuid
+
 
 def get_workspace_client():
     w = WorkspaceClient()
@@ -42,7 +44,7 @@ class create_notebook:
             "nbformat_minor": 0
         }
     def add_cell(self, cell):
-        self._notebook_dict['cells'].append(create_cell(cell))
+        self._notebook_dict['cells'].append(self.create_cell(cell))
 
     def save_notebook(self, path):
 
@@ -59,23 +61,23 @@ class create_notebook:
             format=workspace.ExportFormat.JUPYTER
         )
 
-def create_cell(code:str):
-    return {
-            "cell_type": "code",
-            "execution_count": 0,
-            "metadata": {
-                "application/vnd.databricks.v1+cell": {
-                    "cellMetadata": {},
-                    "inputWidgets": {},
-                    "nuid": str(uuid.uuid4()),
-                    "showTitle": "false",
-                    "tableResultSettingsMap": {},
-                    "title": ""
-                }
-            },
-            "outputs": [],
-            "source": [code]
-        }
+    def create_cell(self, code:str):
+        return {
+                "cell_type": "code",
+                "execution_count": 0,
+                "metadata": {
+                    "application/vnd.databricks.v1+cell": {
+                        "cellMetadata": {},
+                        "inputWidgets": {},
+                        "nuid": str(uuid.uuid4()),
+                        "showTitle": "false",
+                        "tableResultSettingsMap": {},
+                        "title": ""
+                    }
+                },
+                "outputs": [],
+                "source": [code]
+            }
     
 def get_notebook_path():
     dbutils = DBUtils(SparkSession.builder.getOrCreate())
@@ -108,7 +110,7 @@ class submit_run:
         self.cluster_id = cluster_id
         self.workspace_client = get_workspace_client()
     
-    def add_task(self, task_key, notebook_path, params = {}):
+    def add_task(self, task_key, notebook_path:Path, params = {}):
         self.tasks.append(
             jobs.SubmitTask(
                 existing_cluster_id=self.cluster_id,

@@ -1,4 +1,4 @@
-from dbx_tester.utils.databricks_api import create_notebook, create_cell
+from dbx_tester.utils.databricks_api import create_notebook
 from pydantic import BaseModel
 from typing import Any
 
@@ -93,7 +93,7 @@ class NotebookConfigManager():
         for task in self.task_values:
             if task.taskKey not in notebooks:
                 notebooks[task.taskKey] = create_notebook(task.taskKey)
-            notebooks[task.taskKey] + create_cell(f"dbutils.jobs.taskValues.set(key = '{task.key}', value = '{task.value}')")
+            notebooks[task.taskKey].add_cell(f"dbutils.jobs.taskValues.set(key = '{task.key}', value = '{task.value}')")
         return notebooks
 
 class JobConfigManager():
