@@ -6,28 +6,55 @@ from dbx_tester.utils.databricks_dbutils import get_param
 
 from pathlib import Path
 from collections.abc import Callable
-from typing import Type, Any, List
+from typing import Type, Any, List, Dict
 from datetime import datetime
 from dataclasses import dataclass
 from __future__ import annotations
 
 @dataclass
-class Task:
-    path: str
-    cluster: str
+class NotebookNode:
+    task_name: str
+    notebook: create_notebook
+    type: str = "notebook" | "task"
+    cluster: str = None
+
+@dataclass
+class NotebookGraph:
+    nodes : Dict[str, NotebookNode]
+    edges: Dict[str, List[str]]
 
 
 class notebook():
-    def __init__(self, notebook_path:Path, config:NotebookConfigManager = None, cluster = None, depends_on:notebook|List[notebook]=None):
+    def __init__(self, notebook_path:str, task_name:str = None ,config:NotebookConfigManager = None, cluster = None, depends_on:notebook|List[notebook]=None):
         self.notebook_path = notebook_path
+        self.task_name = task_name
         self.config = config
         self.cluster = cluster
         self.depends_on = depends_on if depends_on is not None else []
-        self.task_graph = {"nodes": [], "edges": []}
-        
+        self.notebook_graph = NotebookGraph(nodes={}, edges={})
+        self.global_config = GlobalConfigManager()
+        self.global_config._load_config()
 
-        if not isinstance(self.notebook_path, Path) or not self.notebook_path.exists() or not is_notebook(self.notebook_path.as_posix()):
-            raise ValueError(f"INVALID NOTEBOOK PATH: {self.notebook_path} is not a valid Path")
+        if (
+            self.notebook_path is not None and
+            not Path(self.notebook_path).exists() and
+            not (
+                self.global_config.REPO_PATH is None or
+                (Path(self.global_config.REPO_PATH) / Path(self.notebook_path)).exists()
+            )
+        ):
+            raise ValueError(f"INVALID NOTEBOOK PATH: {self.notebook_path} is invalid or not exists")
+        
+        if (
+            self.notebook_path is not None and
+            not Path(self.notebook_path).exists() and 
+            self.global_config.REPO_PATH is not None
+        ):
+            self.notebook_path = (Path(self.global_config.REPO_PATH) / Path(self.notebook_path)).as_posix()
+
+
+        if self.task_name is not None and (not isinstance(self.task_name, str) or self.task_name.strip() == ""):
+            raise ValueError("INVALID TASK NAME: Add a valid task name")
 
         if config is not None and not isinstance(config, NotebookConfigManager):
             raise ValueError("INVALID NOTEBOOK CONFIG: Add a NotebookConfigManager instance")
@@ -41,93 +68,75 @@ class notebook():
                         raise ValueError("INVALID DEPENDS ON: Add a notebook instance or list of notebook instances")
             else:
                 raise ValueError("INVALID DEPENDS ON: Add a notebook instance or list of notebook instances")
+        
+        if self.task_name is None:
+            self.task_name = f"{self.notebook_path.stem}_task_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+        self.main_notebook = create_notebook(self.task_name)
+        self.notebook_graph.nodes[self.task_name] = NotebookNode(task_name=self.task_name, 
+                                                                 notebook=self.main_notebook, 
+                                                                 type="notebook", 
+                                                                 cluster=self.cluster)
+        self.notebook_graph.edges[self.task_name] = []
     
     @property
-    def task_graph(self):
-        return self.task_graph
+    def notebook_graph(self):
+        return self.notebook_graph
 
-    def _transform_notebook(self, name, task_dir):
+    def _transform_notebook(self):
         """
         Transforms the notebook to be run in the test cache.
+
+        Returns:
+            tuple: (main_notebook, dep_notebooks)
+                main_notebook: The primary notebook object to be run.
+                dep_notebooks: List of dependent notebook objects.
         """
-        self.main_notebook = create_notebook(name)
-        self.dep_notebooks = []
 
         if self.config is not None:
             for task, notebook in self.config._create_tasks().items():
-                self._save_notebook( task_dir / task, notebook)
+                self.notebook_graph.nodes[task] = NotebookNode(task_name=task, 
+                                                               notebook=notebook, 
+                                                               type="task", 
+                                                               cluster=self.cluster)
+                self.notebook_graph.edges[self.task_name].append(task)
 
             self.main_notebook.add_cell(self.config._dbutils_config())
 
         self.main_notebook.add_cell(f"%run {self.notebook_path}")
 
         for i in self.depends_on:
-            tg, dep_notebook = i._transform_notebook(name, task_dir)
-            self._add_task_graph(tg)
-            self.dep_notebooks += dep_notebook
-            
-        return self.main_notebook, self.dep_notebooks
-    
-    def _add_task_graph(self, tg):
-        pass
+            self.notebook_graph.edges[self.task_name].append(i.task_name)
+            notebook_graph = i._transform_notebook()
+            self.notebook_graph.nodes.update(notebook_graph.nodes)
+            self.notebook_graph.edges += notebook_graph.edges
 
-    def _add_run_cell(self, name ,test_notebook):
-
-        if not isinstance(test_notebook, create_notebook):
-            raise ValueError(f"INVALID NOTEBOOK: {test_notebook} is not a valid Notebook instance")
-        
-        test_notebook.add_cell(f"%run {self.current_path}")
-
-        test_notebook.add_cell(f"{name}.run()")
-    
-    def _save_notebook(self, path:Path, test_notebook):
-
-        if not isinstance(path, Path) or not path.parent.exists() or not path.is_dir():
-            raise ValueError(f"INVALID PATH: {path} is not a valid Path")
-        if not isinstance(test_notebook, create_notebook):
-            raise ValueError(f"INVALID NOTEBOOK: {test_notebook} is not a valid Notebook instance")
-        
-        test_notebook.save_notebook(path.as_posix())
-    
+        return self.notebook_graph
     
 
 
 class notebook_test():
-    def __init__(self, fn, notebook_path=None, config=None, cluster_id = None):
+    def __init__(self, fn, notebooks: notebook|list[notebook] = None, cluster_id = None):
         """
         Initializes a notebook test.
 
         Args:
             fn (Callable[..., Any] | Type[Any]):
                 The function or type to test.
-            notebook_path (str, optional): 
-                Path to the notebook.
-            config (NotebookConfigManager, optional): 
-                Configuration manager for the notebook.
+            notebooks (notebook | list[notebook], optional): 
+                The notebook or list of notebooks to test.
             cluster_id (str, optional): 
                 Cluster ID for the test.
-        Resulsts:
+        Results:
             notebook_test object
         """
+
         self.fn:Callable[..., Any] | Type[Any] = fn
-        self.notebook_path = notebook_path
-        self.config:NotebookConfigManager = config
+        self.notebooks = notebooks if isinstance(notebooks, list) else [notebooks]
+        self.cluster_id = cluster_id
+
         self.global_config = GlobalConfigManager()
         
-        if config is not None and not isinstance(config, NotebookConfigManager):
-            raise ValueError("INVALID TEST CASE CONFIG: Add a Notebook config Manager instance")
-        
-        if self.notebook_path is not None and (
-            not Path(self.notebook_path).exists() and 
-            not (self.global_config.REPO_PATH is None or
-                 (Path(self.global_config.REPO_PATH) / Path(self.notebook_path)).exists())):
-            raise ValueError(f"INVALID NOTEBOOK PATH: {self.notebook_path} is invalid or not exists")
-        
-        if self.notebook_path is not None and (
-            not Path(self.notebook_path).exists() and 
-            self.global_config.REPO_PATH is not None and
-            (Path(self.global_config.REPO_PATH) / Path(self.notebook_path)).exists()):
-                self.notebook_path = (Path(self.global_config.REPO_PATH) / Path(self.notebook_path)).as_posix()
             
         if cluster_id is None:
             self.cluster_id = self.global_config.CLUSTER_ID
@@ -156,6 +165,19 @@ class notebook_test():
         self.test_cache_path.mkdir(exist_ok=True, parents=True)
         self.notebook_dir.mkdir(exist_ok=True, parents=True)
         self.task_dir.mkdir(exist_ok=True, parents=True)
+    
+    def _save_test_cache(self):
+
+        """
+        Saves the test cache notebook and tasks.
+        """
+        notebook_graph = self._transform_notebook()
+        
+        for task, notebook in notebook_graph.nodes.items():
+            if task == self.task_name:
+                notebook.notebook.write(self.notebook_dir / f"{task}.ipynb")
+            else:
+                notebook.notebook.write(self.task_dir / f"{task}.ipynb")
 
     
 
