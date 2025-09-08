@@ -172,12 +172,8 @@ class notebook_test():
         Saves the test cache notebook and tasks.
         """
         notebook_graph = self._transform_notebook()
-        
-        for task, notebook in notebook_graph.nodes.items():
-            if task == self.task_name:
-                notebook.notebook.write(self.notebook_dir / f"{task}.ipynb")
-            else:
-                notebook.notebook.write(self.task_dir / f"{task}.ipynb")
+
+        #TODO
 
     
 
