@@ -124,3 +124,10 @@ class submit_run:
             run_name = self.name,
             tasks = self.tasks
         )
+    
+    def as_dict(self):
+        return {
+            "run_name": self.name,
+            "cluster_id": self.cluster_id,
+            "tasks": [task.as_dict() for task in self.tasks]
+        }

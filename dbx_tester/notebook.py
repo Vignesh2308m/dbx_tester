@@ -193,7 +193,8 @@ class notebook_test():
             s.add_task(task_key= task, notebook_path= ((self.task_dir if notebook_graph.nodes[task].type == "task" else self.notebook_dir) / task).as_posix(), 
                        cluster_id= notebook_graph.nodes[task].cluster if notebook_graph.nodes[task].cluster is not None else self.cluster_id,
                        depends_on= edges if len(edges) > 0 else None)
-        
+            
+        print(s.as_dict())
     
     def run(self, debug=False):
         """
