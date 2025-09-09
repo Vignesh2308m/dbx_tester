@@ -27,7 +27,7 @@ class PathValidationError(ConfigurationError):
 class GlobalConfig:
     """Data class representing global configuration settings."""
     TEST_PATH: str
-    CLUSTER_ID: str
+    CLUSTER_ID: str = None
     REPO_PATH: Optional[str] = None
     TEST_CACHE_PATH: Optional[str] = None
     LOG_PATH: Optional[str] = None
@@ -41,9 +41,6 @@ class GlobalConfig:
         """Validate required configuration fields."""
         if not self.TEST_PATH or not self.TEST_PATH.strip():
             raise ConfigurationError("TEST_PATH is required and cannot be empty")
-        
-        if not self.CLUSTER_ID or not self.CLUSTER_ID.strip():
-            raise ConfigurationError("CLUSTER_ID is required and cannot be empty")
 
     def _set_default_paths(self) -> None:
         """Set default paths if not provided."""
