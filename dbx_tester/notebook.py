@@ -68,12 +68,6 @@ class Notebook:
         self._initialize_task_name()
         self._create_main_notebook()
 
-    def _initialize_global_config(self) -> GlobalConfigManager:
-        """Initialize and load global configuration."""
-        config = GlobalConfigManager()
-        config._load_config()
-        return config
-
     def _normalize_dependencies(
         self, 
         depends_on: Optional[Union[Notebook, List[Notebook]]]
@@ -89,6 +83,12 @@ class Notebook:
         raise NotebookValidationError(
             "depends_on must be a Notebook instance or list of Notebook instances"
         )
+
+    def _initialize_global_config(self) -> GlobalConfigManager:
+        """Initialize and load global configuration."""
+        config = GlobalConfigManager()
+        config._load_config()
+        return config
 
     def _validate_dependency_list(self, depends_on: List[Any]) -> None:
         """Validate that all items in dependency list are Notebook instances."""
@@ -106,15 +106,15 @@ class Notebook:
         path = Path(self.notebook_path)
         repo_path = Path(self.global_config.REPO_PATH) if self.global_config.REPO_PATH else None
         
-        if not path.exists() and repo_path:
+        if not is_notebook(path=path.as_posix()) and repo_path:
             resolved_path = repo_path / path
-            if resolved_path.exists():
+            if is_notebook(path=resolved_path.as_posix()):
                 self.notebook_path = resolved_path.as_posix()
             else:
                 raise NotebookValidationError(
                     f"Notebook path does not exist: {self.notebook_path}"
                 )
-        elif not path.exists():
+        elif not is_notebook(path=path.as_posix()):
             raise NotebookValidationError(
                 f"Notebook path does not exist: {self.notebook_path}"
             )

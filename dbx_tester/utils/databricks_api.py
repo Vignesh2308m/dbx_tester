@@ -84,11 +84,14 @@ def get_notebook_path():
     return "/Workspace"+dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
 
 def is_notebook(path):
-    w = get_workspace_client()
-    if path.endswith(".ipynb"):
-        path = path.split(".")[0]
-    return w.workspace.get_status(path=path).object_type == ObjectType.NOTEBOOK
-
+    try:
+        w = get_workspace_client()
+        if path.endswith(".ipynb"):
+            path = path.split(".")[0]
+        return w.workspace.get_status(path=path).object_type == ObjectType.NOTEBOOK
+    except:
+        return False
+    
 def run_notebook(path, params={}):
     dbutils = DBUtils(SparkSession.builder.getOrCreate())
     dbutils.notebook.run(path=path, timeout_seconds=0, arguments=params)
@@ -110,12 +113,13 @@ class submit_run:
         self.cluster_id = cluster_id
         self.workspace_client = get_workspace_client()
     
-    def add_task(self, task_key, notebook_path:Path, params = {}):
+    def add_task(self, task_key, notebook_path:Path, params = {}, depend_on = None):
         self.tasks.append(
             jobs.SubmitTask(
                 existing_cluster_id=self.cluster_id,
                 notebook_task=jobs.NotebookTask(notebook_path=notebook_path, base_parameters=params),
                 task_key=task_key,
+                depends_on=[jobs.TaskDependency(task_key=i) for i in depend_on] if depend_on is not None else None
             )
         )
 
