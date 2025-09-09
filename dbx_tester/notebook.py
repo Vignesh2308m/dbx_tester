@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dbx_tester.global_config import GlobalConfigManager
 from dbx_tester.config_manager import NotebookConfigManager
 from dbx_tester.utils.databricks_api import get_notebook_path, create_notebook, submit_run, is_notebook, run_notebook
@@ -9,7 +11,7 @@ from collections.abc import Callable
 from typing import Type, Any, List, Dict, Literal
 from datetime import datetime
 from dataclasses import dataclass
-from __future__ import annotations
+
 
 @dataclass
 class NotebookNode:
