@@ -117,7 +117,7 @@ class Notebook():
     
 
 
-class notebook_test():
+class Notebook_Test():
     def __init__(self, fn, notebook: Notebook = None, cluster_id = None):
         """
         Initializes a notebook test.
