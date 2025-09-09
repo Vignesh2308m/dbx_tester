@@ -26,8 +26,8 @@ class NotebookGraph:
     edges: Dict[str, List[str]] = field(default_factory=dict)
 
 
-class notebook():
-    def __init__(self, notebook_path:str, task_name:str = None ,config:NotebookConfigManager = None, cluster = None, depends_on:notebook|List[notebook]=None):
+class Notebook():
+    def __init__(self, notebook_path:str, task_name:str = None ,config:NotebookConfigManager = None, cluster = None, depends_on:Notebook|List[Notebook]=None):
         self.notebook_path = notebook_path
         self.task_name = task_name
         self.config = config
@@ -62,11 +62,11 @@ class notebook():
             raise ValueError("INVALID NOTEBOOK CONFIG: Add a NotebookConfigManager instance")
         
         if depends_on is not None:
-            if isinstance(depends_on, notebook):
+            if isinstance(depends_on, Notebook):
                 self.depends_on = [depends_on]
             elif isinstance(depends_on, list):
                 for i in depends_on:
-                    if not isinstance(i, notebook):
+                    if not isinstance(i, Notebook):
                         raise ValueError("INVALID DEPENDS ON: Add a notebook instance or list of notebook instances")
             else:
                 raise ValueError("INVALID DEPENDS ON: Add a notebook instance or list of notebook instances")
@@ -118,7 +118,7 @@ class notebook():
 
 
 class notebook_test():
-    def __init__(self, fn, notebooks: notebook|list[notebook] = None, cluster_id = None):
+    def __init__(self, fn, notebook: Notebook = None, cluster_id = None):
         """
         Initializes a notebook test.
 
@@ -134,7 +134,11 @@ class notebook_test():
         """
 
         self.fn:Callable[..., Any] | Type[Any] = fn
-        self.notebooks = notebooks if isinstance(notebooks, list) else [notebooks]
+
+        self.notebook = notebook
+        if self.notebook is not None and not isinstance(self.notebook, Notebook):
+            raise ValueError("INVALID NOTEBOOKS: Add a notebook instance or list of notebook instances")
+            
         self.cluster_id = cluster_id
 
         self.global_config = GlobalConfigManager()
@@ -150,7 +154,7 @@ class notebook_test():
 
         if self.is_test:
             self.test_cache_path = self.global_config.TEST_CACHE_PATH / self.current_path.relative_to(self.global_config.TEST_PATH).parent / '_test_cache'
-            self.notebook_dir = self.test_cache_path / self.current_path.name / 'test_type=notebook'
+            self.notebook_dir = self.test_cache_path / self.current_path.name / 'test_type=notebook' / self.fn.__name__
             self.task_dir = self.notebook_dir / 'tasks' / self.fn.__name__
 
             self._create_files_and_folders()
@@ -173,12 +177,24 @@ class notebook_test():
         """
         Saves the test cache notebook and tasks.
         """
-        notebook_graph = self._transform_notebook()
+        notebook_graph = self.notebook._transform_notebook()
+        notebook_graph.nodes[self.notebook.task_name].notebook.add_cell(f"%run {self.current_path}")
+        notebook_graph.nodes[self.notebook.task_name].notebook.add_cell(f"{self.fn.__name__}.run()")
 
-        #TODO
+        for task, node in notebook_graph.nodes.items():
+            if node.type == "notebook":
+                node.notebook.save_notebook((self.notebook_dir / task).as_posix())
+            else:
+                node.notebook.save_notebook((self.task_dir / task).as_posix())
+        
+        s = submit_run(self.fn.__name__, self.cluster_id)
 
+        for task, edges in notebook_graph.edges.items():
+            s.add_task(task_key= task, notebook_path= ((self.task_dir if notebook_graph.nodes[task].type == "task" else self.notebook_dir) / task).as_posix(), 
+                       cluster_id= notebook_graph.nodes[task].cluster if notebook_graph.nodes[task].cluster is not None else self.cluster_id,
+                       depends_on= edges if len(edges) > 0 else None)
+        
     
-
     def run(self, debug=False):
         """
         Runs the notebook test.
