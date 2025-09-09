@@ -10,7 +10,7 @@ from pathlib import Path
 from collections.abc import Callable
 from typing import Type, Any, List, Dict, Literal
 from datetime import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -22,8 +22,8 @@ class NotebookNode:
 
 @dataclass
 class NotebookGraph:
-    nodes : Dict[str, NotebookNode]
-    edges: Dict[str, List[str]]
+    nodes : Dict[str, NotebookNode] = field(default_factory=dict)
+    edges: Dict[str, List[str]] = field(default_factory=dict)
 
 
 class notebook():
@@ -33,7 +33,7 @@ class notebook():
         self.config = config
         self.cluster = cluster
         self.depends_on = depends_on if depends_on is not None else []
-        self.notebook_graph = NotebookGraph(nodes={}, edges={})
+        self.notebook_graph = NotebookGraph()
         self.global_config = GlobalConfigManager()
         self.global_config._load_config()
 
