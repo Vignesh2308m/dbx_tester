@@ -80,10 +80,6 @@ class notebook():
                                                                  type="notebook", 
                                                                  cluster=self.cluster)
         self.notebook_graph.edges[self.task_name] = []
-    
-    @property
-    def notebook_graph(self):
-        return self.notebook_graph
 
     def _transform_notebook(self):
         """
