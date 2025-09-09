@@ -107,6 +107,12 @@ class notebook():
             self.notebook_graph.edges[self.task_name].append(i.task_name)
             notebook_graph = i._transform_notebook()
             self.notebook_graph.nodes.update(notebook_graph.nodes)
+            for task, edges in notebook_graph.edges.items():
+                if task in self.notebook_graph.edges:
+                    self.notebook_graph.edges[task] = list(set(self.notebook_graph.edges[task] + edges))
+                else:
+                    self.notebook_graph.edges[task] = edges
+                    
             self.notebook_graph.edges += notebook_graph.edges
 
         return self.notebook_graph
