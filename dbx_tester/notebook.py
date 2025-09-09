@@ -72,7 +72,7 @@ class notebook():
                 raise ValueError("INVALID DEPENDS ON: Add a notebook instance or list of notebook instances")
         
         if self.task_name is None:
-            self.task_name = f"{self.notebook_path.stem}_task_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+            self.task_name = f"{Path(self.notebook_path).stem}_task_{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
         self.main_notebook = create_notebook(self.task_name)
         self.notebook_graph.nodes[self.task_name] = NotebookNode(task_name=self.task_name, 
@@ -112,7 +112,7 @@ class notebook():
                     self.notebook_graph.edges[task] = list(set(self.notebook_graph.edges[task] + edges))
                 else:
                     self.notebook_graph.edges[task] = edges
-                    
+
             self.notebook_graph.edges += notebook_graph.edges
 
         return self.notebook_graph
