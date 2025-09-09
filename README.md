@@ -19,14 +19,14 @@ DBX Tester is easy to use and highly scalable databricks testing framework. It e
 DBX Tester utilize workspace to create and manage tests. The folder structure of the test and test cache will be like mentioned below
 
 :file_folder: _test_cache
-        :file_folder: <test_notebook_name>
-            :file_folder: type= notebook|job (It's a test type)
-                :file_folder: tasks
-                    :file_folder: <test_function_name>
-                        :ledger: <task_notebooks>
-                :ledger: <test_function_name>
+    :file_folder: <test_notebook_name>
+        :file_folder: type= notebook|job (It's a test type)
+            :file_folder: tasks
+                :file_folder: <test_function_name>
+                    :ledger: <task_notebooks>
+            :ledger: <test_function_name>
 
 :file_folder: <test_folder>
-        :ledger: <test_notebook>
-            :file_folder: <sub_folders>
-                :ledger: <test_notebook>
+    :ledger: <test_notebook>
+        :file_folder: <sub_folders>
+            :ledger: <test_notebook>
