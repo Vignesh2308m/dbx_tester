@@ -6,7 +6,7 @@ from dbx_tester.utils.databricks_dbutils import get_param
 
 from pathlib import Path
 from collections.abc import Callable
-from typing import Type, Any, List, Dict
+from typing import Type, Any, List, Dict, Literal
 from datetime import datetime
 from dataclasses import dataclass
 from __future__ import annotations
@@ -15,7 +15,7 @@ from __future__ import annotations
 class NotebookNode:
     task_name: str
     notebook: create_notebook
-    type: str = "notebook" | "task"
+    type: Literal["notebook", "task"] = "notebook"
     cluster: str = None
 
 @dataclass
