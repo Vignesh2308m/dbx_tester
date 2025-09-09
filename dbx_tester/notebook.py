@@ -113,8 +113,6 @@ class notebook():
                 else:
                     self.notebook_graph.edges[task] = edges
 
-            self.notebook_graph.edges += notebook_graph.edges
-
         return self.notebook_graph
     
 
