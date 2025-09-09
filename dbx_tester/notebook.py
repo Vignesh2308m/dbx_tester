@@ -159,7 +159,7 @@ class Notebook:
     def _add_config_tasks(self) -> None:
         """Add configuration tasks to the notebook graph."""
         if self.config is not None:
-            for task, notebook in self.config._create_tasks().items():
+            for task, notebook in self.config.create_task_notebooks().items():
                 self.notebook_graph.nodes[task] = NotebookNode(
                     task_name=task,
                     notebook=notebook,
@@ -168,7 +168,7 @@ class Notebook:
                 )
                 self.notebook_graph.edges[self.task_name].append(task)
             
-            self.main_notebook.add_cell(self.config._dbutils_config())
+            self.main_notebook.add_cell(self.config.generate_dbutils_config())
 
     def _add_main_notebook_cell(self) -> None:
         """Add the main notebook execution cell."""
