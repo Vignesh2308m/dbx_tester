@@ -197,21 +197,20 @@ class Notebook:
 class NotebookTest:
     """Handles notebook testing functionality."""
     
-    def __init__(
-        self, 
-        fn: Union[Callable[..., Any], Type[Any]], 
-        notebook: Optional[Notebook] = None, 
-        cluster_id: Optional[str] = None
-    ):
-        self.fn = fn
+    
+    def __init__(self, notebook: Optional[Notebook] = None, cluster_id: Optional[str] = None):
         self.notebook = notebook
         self.cluster_id = cluster_id
         self.global_config = GlobalConfigManager()
-        
+
+    def __call__(self, fn: Union[Callable[..., Any], Type[Any]]):
+        self.fn = fn
         self._validate_inputs()
         self._initialize_cluster_id()
         self._initialize_paths()
         self._setup_environment()
+        return fn
+
 
     def _validate_inputs(self) -> None:
         """Validate input parameters."""
@@ -299,7 +298,7 @@ class NotebookTest:
                 task_key=task,
                 notebook_path=task_path.as_posix(),
                 cluster_id=node.cluster or self.cluster_id,
-                depends_on=edges if edges else None,
+                depend_on=edges if edges else None,
                 params={"trigger_run": "true"}
             )
         
