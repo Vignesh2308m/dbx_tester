@@ -25,8 +25,7 @@ DBX Tester utilize workspace to create and manage tests. The folder structure of
     ├── 📁<test_notebook_name>/
     │   └── 📁type=notebook|job/
     │       └── 📁tasks/
-    │           └── 📁<test_function_name>/
-    │               └──📒 <task_notebooks>
+    │           └──📒 <task_notebooks>
     │       📁<test_function_name>
     |       └──📒 <test_notebooks>
     <test_folder>/
