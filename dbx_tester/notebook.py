@@ -114,7 +114,7 @@ class Notebook:
                 raise NotebookValidationError(
                     f"Notebook path does not exist: {self.notebook_path}"
                 )
-        elif not is_notebook(path=path.as_posix()):
+        else:
             raise NotebookValidationError(
                 f"Notebook path does not exist: {self.notebook_path}"
             )
