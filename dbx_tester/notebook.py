@@ -238,7 +238,7 @@ class NotebookTest:
         relative_path = self.current_path.relative_to(self.global_config.TEST_PATH)
         self.test_cache_path = self.global_config.TEST_CACHE_PATH / relative_path.parent / '_test_cache'
         self.notebook_dir = self.test_cache_path / self.current_path.name / 'test_type=notebook' / self.fn.__name__
-        self.task_dir = self.notebook_dir / 'tasks' / self.fn.__name__
+        self.task_dir = self.notebook_dir / 'tasks' 
 
     def _setup_cache_paths(self) -> None:
         """Setup paths for cache execution."""
