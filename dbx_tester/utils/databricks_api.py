@@ -113,10 +113,10 @@ class submit_run:
         self.cluster_id = cluster_id
         self.workspace_client = get_workspace_client()
     
-    def add_task(self, task_key, notebook_path:Path, params = {}, depend_on = None):
+    def add_task(self, task_key, notebook_path:Path, params = {}, depend_on = None, cluster_id = None):
         self.tasks.append(
             jobs.SubmitTask(
-                existing_cluster_id=self.cluster_id,
+                existing_cluster_id=cluster_id if cluster_id else self.cluster_id,
                 notebook_task=jobs.NotebookTask(notebook_path=notebook_path, base_parameters=params),
                 task_key=task_key,
                 depends_on=[jobs.TaskDependency(task_key=i) for i in depend_on] if depend_on is not None else None

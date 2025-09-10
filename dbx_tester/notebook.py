@@ -298,7 +298,7 @@ class NotebookTest:
                 task_key=task,
                 notebook_path=task_path.as_posix(),
                 cluster_id=node.cluster or self.cluster_id,
-                depends_on=edges if edges else None,
+                depend_on=edges if edges else None,
                 params={"trigger_run": "true"}
             )
         
