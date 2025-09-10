@@ -209,7 +209,7 @@ class NotebookTest:
         self._initialize_cluster_id()
         self._initialize_paths()
         self._setup_environment()
-        return fn
+        return self
 
 
     def _validate_inputs(self) -> None:
@@ -301,7 +301,7 @@ class NotebookTest:
                 depend_on=edges if edges else None,
                 params={"trigger_run": "true"}
             )
-        
+        self.submission = submission
         logger.info(f"Created submission: {submission.as_dict()}")
 
     def run(self, debug: bool = False) -> None:
@@ -322,21 +322,7 @@ class NotebookTest:
 
     def _run_debug_mode(self) -> None:
         """Run in debug mode."""
-        submission = submit_run(self.fn.__name__, self.cluster_id)
-        
-        # Add task submissions
-        for path in self.task_dir.iterdir():
-            submission.add_task(path.name, path.as_posix(), params={"trigger_run": "true"})
-        
-        # Add main notebook task
-        main_task_path = self.notebook_dir / self.fn.__name__
-        submission.add_task(
-            f"{self.fn.__name__}_task",
-            main_task_path.as_posix(),
-            params={"trigger_run": "true"}
-        )
-        
-        submission.run()
+        return self.submission.run()
 
     def _run_test_execution(self) -> None:
         """Execute the actual test function."""
