@@ -322,7 +322,8 @@ class NotebookTest:
 
     def _run_debug_mode(self) -> None:
         """Run in debug mode."""
-        return self.submission.run()
+        run = self.submission.run()
+        logger.info(f"Test execution triggered: {run.run_id}")
 
     def _run_test_execution(self) -> None:
         """Execute the actual test function."""
