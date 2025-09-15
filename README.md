@@ -18,8 +18,8 @@ DBX Tester is easy to use and highly scalable databricks testing framework. It e
 ## Architecture
 DBX Tester utilize workspace to create and manage tests. The folder structure of the test and test cache will be like mentioned below
 
-```
-## 📁 Folder Structure
+
+📁 Folder Structure
 
     📁_test_cache/
     ├── 📁<test_notebook_name>/
@@ -32,4 +32,5 @@ DBX Tester utilize workspace to create and manage tests. The folder structure of
     ├── 📒 <test_notebook>
     │   └── <sub_folders>/
     │       📒 <test_notebook>
-```
+
+##Examples
