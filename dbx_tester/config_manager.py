@@ -1,4 +1,4 @@
-from dbx_tester.utils.databricks_api import create_notebook
+from dbx_tester.utils.databricks_api import NotebookBuilder
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
@@ -146,7 +146,7 @@ class NotebookConfigManager:
             task_key = task_value.task_key
             
             if task_key not in notebooks:
-                notebooks[task_key] = create_notebook(task_key)
+                notebooks[task_key] = NotebookBuilder(task_key)
             
             cell_content = (
                 f"dbutils.jobs.taskValues.set("

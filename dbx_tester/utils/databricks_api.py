@@ -14,7 +14,7 @@ def get_workspace_client():
     w = WorkspaceClient()
     return w
 
-class create_notebook:
+class NotebookBuilder:
     def __init__(self, name:str):
         self.workspace_client = get_workspace_client()
 
