@@ -4,59 +4,37 @@ from pathlib import Path
 import json
 
 
-class job_test():
-    def __init__(self, fn, job_id, config):
+class JobNotFoundError(ValueError):
+    pass
+
+class Job:
+    def __init__(self, name = None, job_id = None , config = {}, depends_on = None):
+        self.name = name
+        self.job_id = job_id
+        self.config = config
+        self.depends_on = depends_on if depends_on else []
+        self.global_config = GlobalConfig()
+
+        self._validate_inputs()
+        self._check_if_job_exists()
+        pass
+
+    def _validate_inputs(self):
+        pass
+
+    def _check_if_job_exists(self):
+        pass
+
+class JobTest():
+    def __init__(self, fn, job = None, job_id = None, config = {}):
         self.fn = fn
         self.job_id = job_id
         self.config = config
         self.global_config = GlobalConfig()
-
-        self.current_path = Path(get_notebook_path())
-        self.is_test = '_test_cache' not in self.current_path.parts
-
-        if self.is_test:
-            self.test_cache_path = self.global_config.TEST_CACHE_PATH / self.current_path.relative_to(self.global_config.TEST_PATH).parent / '_test_cache'
-            self.notebook_dir = self.test_cache_path / self.current_path.name / 'test_type=jobs'
-            self.config_dir = self.notebook_dir / 'config'
-            
-            self._create_files_and_folders()
-            self._transform_notebook()
-        else:
-            self.test_cache_path = Path(*self.current_path.parts[:self.current_path.parts.index("_test_cache")+1])
-            self.notebook_dir = self.current_path.parent
-            self.config_dir = self.notebook_dir / 'config'
-
         pass
 
-    def _create_files_and_folders(self):
-        """
-        This function will create the files and folders needed for the test cache
-        """
 
-        self.test_cache_path.mkdir(exist_ok=True, parents=True)
-        self.notebook_dir.mkdir(exist_ok=True, parents=True)
-        self.config_dir.mkdir(exist_ok=True, parents=True)
-
-        pass
-
-    def _transform_notebook(self):
-        """
-        This function will transform the notebook to be run in the test cache
-        """
-        test_notebook = create_notebook(self.fn.__name__)
-
-        test_notebook.add_cell(f"%run {self.current_path}")
-
-        test_notebook.add_cell(f"{self.fn.__name__}().run()")
-
-        test_notebook.save_notebook(self.notebook_dir / self.fn.__name__)
-
-        with open(self.config_dir / f"{self.fn.__name__}.json", "w") as f:
-                json.dump(self.config, f)
-                              
-        pass
-
-class job_test_runner():
+class JobTestRunner():
     def __init__(self):
         self.global_config = GlobalConfig()
 
