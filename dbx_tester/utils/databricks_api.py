@@ -92,6 +92,31 @@ def is_notebook(path):
     except:
         return False
     
+def get_job_id(name):
+    w = get_workspace_client()
+    for job in w.jobs.list():
+        if job.settings.name == name:
+            return job.job_id
+    else:
+        raise ValueError(f"JOB NOT FOUND: Job name {name} not found")
+
+def is_job(name = None, job_id = None):
+    w = get_workspace_client()
+    if job_id is not None:
+        try:
+            w.jobs.get(job_id=job_id)
+            return True
+        except:
+            return False
+    elif name is not None:
+        for job in w.jobs.list():
+            if job.settings.name == name:
+                return True
+        else:
+            return False
+    else:
+        raise ValueError("Either job name or job id must be provided")
+    
 def run_notebook(path, params={}):
     dbutils = DBUtils(SparkSession.builder.getOrCreate())
     dbutils.notebook.run(path=path, timeout_seconds=0, arguments=params)

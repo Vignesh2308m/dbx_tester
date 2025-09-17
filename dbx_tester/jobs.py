@@ -1,5 +1,10 @@
+from __future__ import annotations
+
 from dbx_tester.global_config import GlobalConfig
 from dbx_tester.utils.databricks_api import *
+from dbx_tester.config_manager import JobConfigManager
+
+from typing import List
 from pathlib import Path
 import json
 
@@ -8,7 +13,7 @@ class JobNotFoundError(ValueError):
     pass
 
 class Job:
-    def __init__(self, name = None, job_id = None , config = {}, depends_on = None):
+    def __init__(self, name:str = None, job_id:int = None , config:JobConfigManager = None , depends_on:Job|List[Job] = None):
         self.name = name
         self.job_id = job_id
         self.config = config
@@ -20,10 +25,30 @@ class Job:
         pass
 
     def _validate_inputs(self):
-        pass
+        if self.name is None and self.job_id is None:
+            raise ValueError("Either job name or job id must be provided")
+        elif self.name is not None and self.job_id is not None:
+            raise ValueError("Only one of job name or job id must be provided")
+        elif self.name is not None and not isinstance(self.name, str):
+            raise ValueError("Job name must be a string")
+        elif self.job_id is not None and not isinstance(self.job_id, int):
+            raise ValueError("Job id must be an integer")
+        elif not isinstance(self.config, JobConfigManager):
+            raise ValueError("Config must be a JobConfigManager object")
+        elif not isinstance(self.depends_on, (Job, list)):
+            raise ValueError("Depends on must be a Job object or a list of Job objects")
+        elif isinstance(self.depends_on, list):
+            for i in self.depends_on:
+                if not isinstance(i, Job):
+                    raise ValueError("Depends on must be a list of Job objects")
+        else:
+            return True
 
     def _check_if_job_exists(self):
-        pass
+        if not is_job(name=self.name, job_id=self.job_id):
+            raise JobNotFoundError(f"Job not found: Job with name {self.name} or id {self.job_id} not found")
+        else:
+            self.job_id = get_job_id(self.name) if self.job_id is None else self.job_id
 
 class JobTest():
     def __init__(self, fn, job = None, job_id = None, config = {}):
