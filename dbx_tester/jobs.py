@@ -63,7 +63,7 @@ class Job:
         if not is_job(name=self.name, job_id=self.job_id):
             raise JobNotFoundError(f"Job not found: Job with name {self.name} or id {self.job_id} not found")
         else:
-            self.job_id = get_job_id(self.name) if self.job_id is None else self.job_id
+            object.__setattr__(self, 'job_id', get_job_id(name=self.name, job_id=self.job_id))
 
 class JobTest():
     def __init__(self, fn, job: Job,  config = {}):
@@ -78,6 +78,7 @@ class JobTest():
         visited = set()
         job_graph = JobGraph()
         stack = [{0:self.job}]
+
         while stack:
             index, job = stack.pop()
             job_graph.job_index[index] = job
