@@ -1,0 +1,72 @@
+import sqlite3
+import json
+
+from dbx_tester.db.init import db_conn
+
+
+class JobError(Exception):
+    pass
+
+def add_job_test(test_dir, test_path, test_name, test_dag):
+    conn, cursor = db_conn()
+    try:
+        query = """
+        INSERT INTO job_test (test_dir,test_path, test_name, test_dag)
+        VALUES (?, ?, ?) ON CONFLICT(test_dir,test_path, test_name) DO UPDATE SET
+            test_dag=excluded.test_dag,
+            updated_at=CURRENT_TIMESTAMP"""
+        
+        cursor.execute(query, (test_path, test_name, json.dumps(test_dag)))
+        conn.commit()
+    except Exception as e:
+        raise JobError(f"Error adding job: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_job_test(test_dir, test_path, test_name):
+    conn, cursor = db_conn()
+    try:
+        query = """
+        SELECT * FROM job_test WHERE test_dir=? AND test_path=? AND test_name=? """
+        cursor.execute(query, (test_dir, test_path, test_name))
+        result = cursor.fetchone()
+        if result:
+            return {
+                "test_path": result[0],
+                "test_name": result[1],
+                "test_dag": json.loads(result[2]),
+                "created_at": result[3],
+                "updated_at": result[4],
+            }
+        else:
+            return None
+    except Exception as e:
+        raise JobError(f"Error fetching job: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+def list_job_tests(test_dir):
+    conn, cursor = db_conn()
+    try:
+        query = """
+        SELECT * FROM job_test WHERE test_dir=? """
+        cursor.execute(query, (test_dir,))
+        results = cursor.fetchall()
+        jobs = []
+        for result in results:
+            jobs.append({
+                "test_path": result[0],
+                "test_name": result[1],
+                "test_dag": json.loads(result[2]),
+                "created_at": result[3],
+                "updated_at": result[4],
+            })
+        return jobs
+    except Exception as e:
+        raise JobError(f"Error listing jobs: {e}")
+    finally:
+        if conn:
+            conn.close()
