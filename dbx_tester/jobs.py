@@ -22,10 +22,11 @@ class JobTestError(ValueError):
     pass
 
 @dataclass
-class JobGraph:
+class TestGraph:
     job_index: Dict[int, Job] = field(default_factory=dict)
     entry_point: Set[int] = field(default_factory=set)
     job_flow: Dict[int, Set[int]] = field(default_factory=dict)
+    test_job: submit_run = None
 
 @dataclass(frozen=True)
 class Job:
@@ -70,12 +71,39 @@ class JobTest():
         self.fn = fn
         self.job = job
         self.global_config = GlobalConfig()
+        self.dep_graph = TestGraph()
+
+        self._initialize_paths()
+        self._build_dep_graph()
+        self._build_test_notebook()
         pass
 
-    def _build_test(self):
+    def _initialize_paths(self) -> None:
+        """Initialize file paths for the test."""
+        self.current_path = Path(get_notebook_path())
+        self.is_test = '_test_cache' not in self.current_path.parts
+        
+        if self.is_test:
+            self._setup_test_paths()
+        else:
+            self._setup_cache_paths()
+
+    def _setup_test_paths(self) -> None:
+        """Setup paths for test execution."""
+        relative_path = self.current_path.relative_to(self.global_config.TEST_PATH)
+        self.test_cache_path = self.global_config.TEST_CACHE_PATH / relative_path.parent / '_test_cache'
+        self.notebook_dir = self.test_cache_path / self.current_path.name / 'test_type=notebook' / self.fn.__name__
+
+    def _setup_cache_paths(self) -> None:
+        """Setup paths for cache execution."""
+        cache_index = self.current_path.parts.index("_test_cache") + 1
+        self.test_cache_path = Path(*self.current_path.parts[:cache_index])
+        self.notebook_dir = self.current_path.parent
+
+    def _build_dep_graph(self):
 
         visited = set()
-        dep_graph = JobGraph()
+        
         stack = [{0:self.job}]
 
         while stack:
@@ -83,19 +111,46 @@ class JobTest():
             if job in visited:
                 raise JobTestError("Circular dependency detected")
             visited.add(job)
-            if index not in dep_graph.job_flow:
-                dep_graph.job_flow[index] = set()
+            if index not in self.dep_graph.job_flow:
+                self.dep_graph.job_flow[index] = set()
             if index > 0:
-                dep_graph.job_flow[index].add(index - 1)
-            dep_graph.job_index[index] = job
+                self.dep_graph.job_flow[index].add(index - 1)
+            self.dep_graph.job_index[index] = job
             if len(job.depends_on) == 0:
-                dep_graph.entry_point.add(index)
+                self.dep_graph.entry_point.add(index)
             else:
                 for dep in job.depends_on:
                     dep_index = index + 1
                     stack.append({dep_index: dep})
-        return dep_graph
+    
+    def _build_test_notebook(self):
 
+        notebook_name = f"test_{self.fn.__name__}"
+
+        test_notebook = notebook_builder(notebook_name)
+
+        test_notebook.add_cell(f"%run {get_notebook_path()}")
+
+        test_notebook.add_cell(f"{self.fn.__name__}.run()")
+
+        test_notebook.save(self.notebook_dir / f"{notebook_name}")
+
+    def _build_test_job(self):
+
+        test_job_name = f"test_{self.fn.__name__}"
+
+        self.dep_graph.test_job = submit_run(name=test_job_name, cluster_id=None)
+
+        #TODO
+        pass
+
+    def _save_test_artifacts(self):
+        #TODO
+        pass
+
+    def run(self):
+        #TODO
+        pass
 
 
 class JobTestRunner():
