@@ -4,7 +4,7 @@ from dbx_tester.global_config import GlobalConfigManager
 from dbx_tester.config_manager import NotebookConfigManager
 from dbx_tester.utils.databricks_api import (
     get_notebook_path, 
-    NotebookBuilder, 
+    notebook_builder, 
     submit_run, 
     is_notebook, 
     run_notebook
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class NotebookNode:
     """Represents a node in the notebook execution graph."""
     task_name: str
-    notebook: NotebookBuilder
+    notebook: notebook_builder
     type: Literal["notebook", "task"] = "notebook"
     cluster: Optional[str] = None
 
@@ -140,7 +140,7 @@ class Notebook:
 
     def _create_main_notebook(self) -> None:
         """Create the main notebook and initialize the graph."""
-        self.main_notebook = NotebookBuilder(self.task_name)
+        self.main_notebook = notebook_builder(self.task_name)
         self.notebook_graph.nodes[self.task_name] = NotebookNode(
             task_name=self.task_name,
             notebook=self.main_notebook,

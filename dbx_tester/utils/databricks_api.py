@@ -14,7 +14,7 @@ def get_workspace_client():
     w = WorkspaceClient()
     return w
 
-class NotebookBuilder:
+class notebook_builder:
     def __init__(self, name:str):
         self.workspace_client = get_workspace_client()
 
@@ -78,6 +78,23 @@ class NotebookBuilder:
                 "outputs": [],
                 "source": [code]
             }
+
+
+class JobRunner():
+    def __init__(self, job_id):
+        self.job_id = job_id
+        self.run_id = None
+
+    def run(self):
+        w = get_workspace_client()
+        run_id = w.jobs.run_now(job_id=self.job_id).run_id
+        return run_id
+    
+    def get_run_status(self):
+        w = get_workspace_client()
+        run = w.jobs.get_run(run_id=self.run_id)
+        return run.state.life_cycle_state, run.state.result_state
+
     
 def get_notebook_path():
     dbutils = DBUtils(SparkSession.builder.getOrCreate())

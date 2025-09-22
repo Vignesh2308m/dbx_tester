@@ -4,25 +4,40 @@ from dbx_tester.global_config import GlobalConfig
 from dbx_tester.utils.databricks_api import *
 from dbx_tester.config_manager import JobConfigManager
 
-from typing import List
+from typing import List, Dict, Set
+from enum import Enum
 from pathlib import Path
+from dataclasses import dataclass, field
+import logging
 import json
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class JobNotFoundError(ValueError):
     pass
 
-class Job:
-    def __init__(self, name:str = None, job_id:int = None , config:JobConfigManager = None , depends_on:Job|List[Job] = None):
-        self.name = name
-        self.job_id = job_id
-        self.config = config
-        self.depends_on = depends_on if depends_on else []
-        self.global_config = GlobalConfig()
+class JobTestError(ValueError):
+    pass
 
+@dataclass
+class JobGraph:
+    job_index: Dict[int, Job] = field(default_factory=dict)
+    entry_point: Set[int] = field(default_factory=set)
+    job_flow: Dict[int, Set[int]] = field(default_factory=dict)
+
+@dataclass
+class Job:
+    name: str = None
+    job_id: int = None
+    config: JobConfigManager = None
+    depends_on: List[Job] = field(default_factory=list)
+    global_config: GlobalConfig = GlobalConfig()
+
+    def __post_init__(self):
         self._validate_inputs()
         self._check_if_job_exists()
-        pass
 
     def _validate_inputs(self):
         if self.name is None and self.job_id is None:
@@ -51,12 +66,36 @@ class Job:
             self.job_id = get_job_id(self.name) if self.job_id is None else self.job_id
 
 class JobTest():
-    def __init__(self, fn, job = None, job_id = None, config = {}):
+    def __init__(self, fn, job: Job,  config = {}):
         self.fn = fn
-        self.job_id = job_id
+        self.job = job
         self.config = config
         self.global_config = GlobalConfig()
         pass
+
+    def _build_test(self):
+
+        visited = set()
+        job_graph = JobGraph()
+        stack = [{0:self.job}]
+        while stack:
+            index, job = stack.pop()
+            job_graph.job_index[index] = job
+            if job in visited:
+                raise JobTestError("Circular dependency detected")
+            visited.add(job)
+            if index not in job_graph.job_flow:
+                job_graph.job_flow[index] = set()
+            if index > 0:
+                job_graph.job_flow[index].add(index - 1)
+            if len(job.depends_on) == 0:
+                job_graph.entry_point.add(index)
+            else:
+                for dep in job.depends_on:
+                    dep_index = index + 1
+                    stack.append({dep_index: dep})
+        return job_graph
+
 
 
 class JobTestRunner():
