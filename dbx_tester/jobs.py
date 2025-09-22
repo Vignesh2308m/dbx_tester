@@ -27,7 +27,7 @@ class JobGraph:
     entry_point: Set[int] = field(default_factory=set)
     job_flow: Dict[int, Set[int]] = field(default_factory=dict)
 
-@dataclass
+@dataclass(frozen=True)
 class Job:
     name: str = None
     job_id: int = None
@@ -66,36 +66,35 @@ class Job:
             object.__setattr__(self, 'job_id', get_job_id(name=self.name, job_id=self.job_id))
 
 class JobTest():
-    def __init__(self, fn, job: Job,  config = {}):
+    def __init__(self, fn, job: Job):
         self.fn = fn
         self.job = job
-        self.config = config
         self.global_config = GlobalConfig()
         pass
 
     def _build_test(self):
 
         visited = set()
-        job_graph = JobGraph()
+        dep_graph = JobGraph()
         stack = [{0:self.job}]
 
         while stack:
             index, job = stack.pop()
-            job_graph.job_index[index] = job
             if job in visited:
                 raise JobTestError("Circular dependency detected")
             visited.add(job)
-            if index not in job_graph.job_flow:
-                job_graph.job_flow[index] = set()
+            if index not in dep_graph.job_flow:
+                dep_graph.job_flow[index] = set()
             if index > 0:
-                job_graph.job_flow[index].add(index - 1)
+                dep_graph.job_flow[index].add(index - 1)
+            dep_graph.job_index[index] = job
             if len(job.depends_on) == 0:
-                job_graph.entry_point.add(index)
+                dep_graph.entry_point.add(index)
             else:
                 for dep in job.depends_on:
                     dep_index = index + 1
                     stack.append({dep_index: dep})
-        return job_graph
+        return dep_graph
 
 
 
