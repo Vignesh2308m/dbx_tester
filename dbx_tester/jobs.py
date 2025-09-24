@@ -21,12 +21,36 @@ class JobNotFoundError(ValueError):
 class JobTestError(ValueError):
     pass
 
+class JobTestProcessError(Exception):
+    pass
+
+
 @dataclass
-class TestGraph:
+class JobTestGraph:
     job_index: Dict[int, Job] = field(default_factory=dict)
     entry_point: Set[int] = field(default_factory=set)
     job_flow: Dict[int, Set[int]] = field(default_factory=dict)
     test_job: submit_run = None
+
+class JobTestState(Enum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    SKIPPED = "SKIPPED"
+    CANCELED = "CANCELED"
+
+@dataclass
+class JobTestProcess:
+    test_graph: JobTestGraph = None
+    state: JobTestState = JobTestState.PENDING
+    current_jobs: Set[int] = field(default_factory=set)
+    runs: Dict[int,int] = field(default_factory=dict)
+    logs: Dict[int,str] = field(default_factory=dict)
+
+class JobTrigger(Enum):
+    ON_DEMAND = "ON_DEMAND"
+    WAIT = "WAIT"
 
 @dataclass(frozen=True)
 class Job:
@@ -34,6 +58,7 @@ class Job:
     job_id: int = None
     config: JobConfigManager = None
     depends_on: List[Job] = field(default_factory=list)
+    trigger: JobTrigger = JobTrigger.ON_DEMAND
     global_config: GlobalConfig = GlobalConfig()
 
     def __post_init__(self):
@@ -43,6 +68,8 @@ class Job:
     def _validate_inputs(self):
         if self.name is None and self.job_id is None:
             raise ValueError("Either job name or job id must be provided")
+        elif len(self.depends_on) == 0 and self.trigger == JobTrigger.WAIT:
+            raise ValueError("Job with no dependencies cannot have WAIT trigger")
         elif self.name is not None and self.job_id is not None:
             raise ValueError("Only one of job name or job id must be provided")
         elif self.name is not None and not isinstance(self.name, str):
@@ -66,12 +93,68 @@ class Job:
         else:
             object.__setattr__(self, 'job_id', get_job_id(name=self.name, job_id=self.job_id))
 
+class JobTestProcessManager:
+    def __init__(self):
+        self.processes: Dict[str, JobTestProcess] = {}
+        self.init_count = 0
+        pass
+
+    def create_process(self, jtp: JobTestProcess) -> str:
+        process_id = f"process_{len(self.processes) + 1}"
+        self.processes[process_id] = jtp
+        #TODO: Save to db
+
+    def init_run(self) -> None:
+        for process_id in self.processes.keys():
+            process = self.processes[process_id]
+            for i in process.test_graph.entry_point:
+                process.current_jobs.add(i)
+                run = JobRunner(process.test_graph.job_index[i].job_id, process.test_graph.job_index[i].config).run()
+                process.runs.update({i: run})
+                process.runs.update({i: run.get_run_status()})
+
+                #TODO: Save to db
+            process.state = JobTestState.RUNNING
+    
+    def interrupt_process(self, process_id: str) -> None:
+        #TODO: Implement interrupt logic
+        return True
+    
+    def check_and_update_current_state(self, process_id):
+        process = self.processes[process_id]
+        for i in process.current_jobs:
+            run = process.runs[i]
+            process.runs.update({i: run.get_run_status()})
+        pass
+    
+    def check_for_failure(self, process_id: str):
+        pass
+
+    def run_next_stage(self, process_id:str):
+        pass
+    
+    def monitor_process(self) -> None:
+        if self.init_count == 0:
+            raise JobTestProcessError("Process not initialized. Call init_run() before monitoring.")
+        while self.init_count == 0 and not self.interrupt_process():
+            for process_id in self.processes.keys():
+                process = self.processes[process_id]
+                
+        
+    
+    def execute_process(self, process_id: str) -> None:
+        if process_id not in self.processes:
+            raise JobTestError(f"Process with id {process_id} not found")
+        process = self.processes[process_id]
+        process.state = JobTestState.RUNNING
+
+
 class JobTest():
     def __init__(self, fn, job: Job):
         self.fn = fn
         self.job = job
         self.global_config = GlobalConfig()
-        self.dep_graph = TestGraph()
+        self.dep_graph = JobTestGraph()
 
         self._initialize_paths()
         self._build_dep_graph()

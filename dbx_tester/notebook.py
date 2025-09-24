@@ -10,6 +10,7 @@ from dbx_tester.utils.databricks_api import (
     run_notebook
 )
 from dbx_tester.utils.databricks_dbutils import get_param
+from dbx_tester.db.notebook import add_notebook_test, get_notebook_test, list_notebook_tests
 
 from pathlib import Path
 from collections.abc import Callable
@@ -210,7 +211,6 @@ class NotebookTest:
         self._initialize_paths()
         self._setup_environment()
         return self
-
 
     def _validate_inputs(self) -> None:
         """Validate input parameters."""

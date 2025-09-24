@@ -81,13 +81,13 @@ class notebook_builder:
 
 
 class JobRunner():
-    def __init__(self, job_id):
+    def __init__(self, job_id, params = {}):
         self.job_id = job_id
         self.run_id = None
 
     def run(self):
         w = get_workspace_client()
-        run_id = w.jobs.run_now(job_id=self.job_id).run_id
+        run_id = w.jobs.run_now(job_id=self.job_id, params = {}).run_id
         return run_id
     
     def get_run_status(self):
