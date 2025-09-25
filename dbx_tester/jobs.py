@@ -24,6 +24,17 @@ class JobTestError(ValueError):
 class JobTestProcessError(Exception):
     pass
 
+class JobTestState(Enum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    SKIPPED = "SKIPPED"
+    CANCELED = "CANCELED"
+
+class JobTrigger(Enum):
+    ON_DEMAND = "ON_DEMAND"
+    WAIT = "WAIT"
 
 @dataclass
 class JobTestGraph:
@@ -32,13 +43,7 @@ class JobTestGraph:
     job_flow: Dict[int, Set[int]] = field(default_factory=dict)
     test_job: submit_run = None
 
-class JobTestState(Enum):
-    PENDING = "PENDING"
-    RUNNING = "RUNNING"
-    SUCCESS = "SUCCESS"
-    FAILED = "FAILED"
-    SKIPPED = "SKIPPED"
-    CANCELED = "CANCELED"
+
 
 @dataclass
 class JobTestProcess:
@@ -48,9 +53,7 @@ class JobTestProcess:
     runs: Dict[int,int] = field(default_factory=dict)
     logs: Dict[int,str] = field(default_factory=dict)
 
-class JobTrigger(Enum):
-    ON_DEMAND = "ON_DEMAND"
-    WAIT = "WAIT"
+
 
 @dataclass(frozen=True)
 class Job:
@@ -68,6 +71,8 @@ class Job:
     def _validate_inputs(self):
         if self.name is None and self.job_id is None:
             raise ValueError("Either job name or job id must be provided")
+        elif self.trigger not in JobTrigger:
+            raise ValueError("Invalid trigger type")
         elif len(self.depends_on) == 0 and self.trigger == JobTrigger.WAIT:
             raise ValueError("Job with no dependencies cannot have WAIT trigger")
         elif self.name is not None and self.job_id is not None:
@@ -104,7 +109,7 @@ class JobTestProcessManager:
         self.processes[process_id] = jtp
         #TODO: Save to db
 
-    def init_run(self) -> None:
+    def init_process(self) -> None:
         for process_id in self.processes.keys():
             process = self.processes[process_id]
             for i in process.test_graph.entry_point:
@@ -112,13 +117,24 @@ class JobTestProcessManager:
                 run = JobRunner(process.test_graph.job_index[i].job_id, process.test_graph.job_index[i].config).run()
                 process.runs.update({i: run})
                 process.runs.update({i: run.get_run_status()})
-
-                #TODO: Save to db
             process.state = JobTestState.RUNNING
     
-    def interrupt_process(self, process_id: str) -> None:
-        #TODO: Implement interrupt logic
-        return True
+    def stop_process(self, process_id) -> None:
+        process = self.processes[process_id]
+        for i in process.current_jobs:
+            run = process.runs[i]
+            if run.get_run_status() == 'RUNNING':
+                run.cancel_run()
+                process.runs.update({i: 'CANCELED'})
+                process.state = JobTestState.CANCELED
+        self.save_logs(process_id)
+    
+    def save_logs(self, process_id: str) -> None:
+        #TODO: Implement logic to save logs
+        pass
+    
+    def check_for_interrupt(self, process_id: str) -> None:
+        pass
     
     def check_and_update_current_state(self, process_id):
         process = self.processes[process_id]
@@ -128,26 +144,65 @@ class JobTestProcessManager:
         pass
     
     def check_for_failure(self, process_id: str):
-        pass
+        process = self.processes[process_id]
+        for i in process.current_jobs:
+            run = process.runs[i]
+            if run.get_run_status() == 'FAILED':
+                    process.state = JobTestState.FAILED
+                    self.stop_process(process_id)
+                    self.save_logs(process_id)
+                    return
 
-    def run_next_stage(self, process_id:str):
-        pass
+    def check_for_next_run(self, process_id:str):
+        process = self.processes[process_id]
+        if process.state != JobTestState.FAILED:
+            return
+        for i in process.current_jobs:
+            run = process.runs[i]
+            if run.get_run_status() != 'SUCCESS':
+                continue
+            next_jobs = process.test_graph.job_flow.get(i, set())
+            for next_job in next_jobs:
+                if next_job not in process.current_jobs:
+                    process.current_jobs.add(next_job)
+                    new_run = JobRunner(process.test_graph.job_index[next_job].job_id, 
+                                        process.test_graph.job_index[next_job].config).run()
+                    process.runs.update({next_job: new_run})
+                    process.runs.update({next_job: new_run.get_run_status()})
+
+    def execute_test(self, process_id: str) -> None:
+        process = self.processes[process_id]
+        if (
+            all(status == 'SUCCESS' for status in process.runs.values()) 
+            and len(process.runs) == len(process.test_graph.job_index)
+            and 'test_job' in process.runs.keys
+            ):
+
+            run = process.test_graph.test_job.run()
+            process.runs.update({'test_job': run})
+            process.logs.update({'test_job': run.get_run_status()})
+            self.save_logs(process_id)
+    
+    def complete_test(self, process_id: str) -> None:
+        process = self.processes[process_id]
+        if all(status == 'SUCCESS' for status in process.runs.values()) and len(process.runs) == len(process.test_graph.job_index) + 1:
+            process.state = JobTestState.SUCCESS
+            self.save_logs(process_id)
+            self.processes.pop(process_id)
+
     
     def monitor_process(self) -> None:
         if self.init_count == 0:
             raise JobTestProcessError("Process not initialized. Call init_run() before monitoring.")
-        while self.init_count == 0 and not self.interrupt_process():
+        while self.init_count == len(self.processes) and not self.interrupt_process():
             for process_id in self.processes.keys():
                 process = self.processes[process_id]
-                
-        
-    
-    def execute_process(self, process_id: str) -> None:
-        if process_id not in self.processes:
-            raise JobTestError(f"Process with id {process_id} not found")
-        process = self.processes[process_id]
-        process.state = JobTestState.RUNNING
-
+                self.check_and_update_current_state(process_id)
+                self.check_for_failure(process_id)
+                self.check_for_interrupt(process_id)
+                self.check_for_next_run(process_id)
+                self.execute_test(process_id)
+                self.complete_test(process_id)               
 
 class JobTest():
     def __init__(self, fn, job: Job):
@@ -212,7 +267,7 @@ class JobTest():
 
         test_notebook = notebook_builder(notebook_name)
 
-        test_notebook.add_cell(f"%run {get_notebook_path()}")
+        test_notebook.add_cell(f"%run {self.current_path.as_posix()}")
 
         test_notebook.add_cell(f"{self.fn.__name__}.run()")
 
@@ -223,8 +278,6 @@ class JobTest():
         test_job_name = f"test_{self.fn.__name__}"
 
         self.dep_graph.test_job = submit_run(name=test_job_name, cluster_id=None)
-
-        #TODO
         pass
 
     def _save_test_artifacts(self):
@@ -237,11 +290,16 @@ class JobTest():
 
 
 class JobTestRunner():
-    def __init__(self):
+    def __init__(self, test_path: str = None):
         self.global_config = GlobalConfig()
 
         self.test_path = Path(self.global_config.TEST_PATH)  
         self.test_cache_path = Path(self.global_config.TEST_CACHE_PATH)
+        pass
+
+    def _check_test_path(self):
+        if not self.test_path.exists() or not self.test_path.is_dir():
+            raise FileNotFoundError(f"Test path does not exist or is not a directory: {self.test_path}")
         pass
 
     def _identify_job_tests(self):

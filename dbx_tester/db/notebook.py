@@ -70,3 +70,16 @@ def list_notebook_tests(test_dir):
     finally:
         if conn:
             conn.close()
+
+def log_notebook_test(self,test_id, runs, status, errorlogs):
+    try:
+        query = """
+        INSERT INTO notebook_test_logs (test_id, runs, status, errorlogs)
+        VALUES (?, ?, ?, ?)"""
+        self.cursor.execute(query, (test_id, json.dumps(runs), status, errorlogs))
+        self.conn.commit()
+    except Exception as e:
+        raise JobError(f"Error logging job run: {e}")
+    finally:
+        if self.conn:
+            self.conn.close()

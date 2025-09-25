@@ -42,6 +42,7 @@ class init:
     def create_notebook_test(self):
         query = """
         CREATE TABLE IF NOT EXISTS notebook_test (
+            test_id INTEGER PRIMARY KEY AUTOINCREMENT,
             test_dir TEXT,
             test_path TEXT,
             test_name TEXT,
@@ -57,12 +58,46 @@ class init:
     def create_job_test(self):
         query = """
         CREATE TABLE IF NOT EXISTS job_test (
+            test_id INTEGER PRIMARY KEY AUTOINCREMENT,
             test_dir TEXT,
             test_path TEXT,
             test_name TEXT,
             test_dag TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+        """
+        self.cursor.execute(query)
+        self.conn.commit()
+        pass
+
+    def create_notebook_test_logs(self):
+        query = """
+        CREATE TABLE IF NOT EXISTS notebook_test_logs (
+            log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            test_id INTEGER,
+            runs TEXT,
+            status TEXT,
+            errorlogs TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ends_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+        self.cursor.execute(query)
+        self.conn.commit()
+        pass
+
+
+    def create_job_test_logs(self):
+        query = """
+        CREATE TABLE IF NOT EXISTS job_test_logs (
+            log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            test_id INTEGER,
+            runs TEXT,
+            status TEXT,
+            errorlogs TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ends_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
         """
         self.cursor.execute(query)
         self.conn.commit()

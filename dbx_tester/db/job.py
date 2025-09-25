@@ -70,3 +70,23 @@ def list_job_tests(test_dir):
     finally:
         if conn:
             conn.close()
+
+class JobTestLogger:
+    def __init__(self, test_id):
+        self.test_id = test_id
+        self.conn, self.cursor = db_conn()
+        pass
+
+    def log_run(self, runs, status, errorlogs):
+        try:
+            query = """
+            INSERT INTO job_test_logs (test_id, runs, status, errorlogs)
+            VALUES (?, ?, ?, ?)"""
+            self.cursor.execute(query, (self.test_id, json.dumps(runs), status, errorlogs))
+            self.conn.commit()
+        except Exception as e:
+            raise JobError(f"Error logging job run: {e}")
+    def close(self):
+        if self.conn:
+            self.conn.close()
+
