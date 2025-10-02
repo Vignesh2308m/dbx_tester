@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class NotebookNode:
-    """Represents a node in the notebook execution graph."""
     task_name: str
     notebook: notebook_builder
     type: Literal["notebook", "task"] = "notebook"
@@ -35,19 +34,15 @@ class NotebookNode:
 
 @dataclass
 class NotebookGraph:
-    """Represents the execution graph of notebooks and their dependencies."""
     nodes: Dict[str, NotebookNode] = field(default_factory=dict)
     edges: Dict[str, List[str]] = field(default_factory=dict)
 
 
 class NotebookValidationError(ValueError):
-    """Custom exception for notebook validation errors."""
     pass
 
 
 class Notebook:
-    """Represents a notebook with its dependencies and configuration."""
-    
     def __init__(
         self, 
         notebook_path: str, 
@@ -73,7 +68,7 @@ class Notebook:
         self, 
         depends_on: Optional[Union[Notebook, List[Notebook]]]
     ) -> List[Notebook]:
-        """Normalize dependencies to always be a list."""
+        
         if depends_on is None:
             return []
         if isinstance(depends_on, Notebook):
@@ -86,13 +81,11 @@ class Notebook:
         )
 
     def _initialize_global_config(self) -> GlobalConfigManager:
-        """Initialize and load global configuration."""
         config = GlobalConfigManager()
         config._load_config()
         return config
 
     def _validate_dependency_list(self, depends_on: List[Any]) -> None:
-        """Validate that all items in dependency list are Notebook instances."""
         for item in depends_on:
             if not isinstance(item, Notebook):
                 raise NotebookValidationError(
@@ -100,7 +93,6 @@ class Notebook:
                 )
 
     def _validate_and_resolve_paths(self) -> None:
-        """Validate and resolve notebook paths."""
         if self.notebook_path is None:
             return
             

@@ -83,3 +83,16 @@ def log_notebook_test(self,test_id, runs, status, errorlogs):
     finally:
         if self.conn:
             self.conn.close()
+
+def log_events(self,event_type, event_details):
+    try:
+        query = """
+        INSERT INTO job_events (event_type, event_details)
+        VALUES (?, ?)"""
+        self.cursor.execute(query, (event_type, json.dumps(event_details)))
+        self.conn.commit()
+    except Exception as e:
+        raise JobError(f"Error logging event: {e}")
+    finally:
+        if self.conn:
+            self.conn.close()
