@@ -18,6 +18,10 @@ class init:
             self.create_global_config()
             self.create_notebook_test()
             self.create_job_test()
+            self.create_notebook_test_status()
+            self.create_job_test_status()
+            self.create_notebook_test_logs()
+            self.create_job_test_logs()
         except Exception as e:
             raise InitError(f"Error initializing database: {e}")
         finally:
@@ -32,7 +36,6 @@ class init:
             cluster TEXT,
             repo_dir TEXT,
             test_cache_dir TEXT,
-            log_dir TEXT,
         )
         """
         self.cursor.execute(query)
@@ -70,15 +73,16 @@ class init:
         self.conn.commit()
         pass
 
-    def create_notebook_test_logs(self):
+    def create_notebook_test_status(self):
         query = """
-        CREATE TABLE IF NOT EXISTS notebook_test_logs (
-            log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        CREATE TABLE IF NOT EXISTS notebook_test_status (
+            status_id INTEGER PRIMARY KEY AUTOINCREMENT,
             test_id INTEGER,
             runs TEXT,
             status TEXT,
-            errorlogs TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            error TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             ends_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """
@@ -87,16 +91,45 @@ class init:
         pass
 
 
+    def create_job_test_status(self):
+        query = """
+        CREATE TABLE IF NOT EXISTS job_test_status (
+            status_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            test_id INTEGER,
+            runs TEXT,
+            status TEXT,
+            error TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            ends_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+        self.cursor.execute(query)
+        self.conn.commit()
+        pass
+
+    def create_notebook_test_logs(self):
+        query = """
+        CREATE TABLE IF NOT EXISTS notebook_test_logs (
+            log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            test_id INTEGER,
+            event_type TEXT,
+            message TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        )
+        """
+        self.cursor.execute(query)
+        self.conn.commit()
+        pass
+
     def create_job_test_logs(self):
         query = """
         CREATE TABLE IF NOT EXISTS job_test_logs (
             log_id INTEGER PRIMARY KEY AUTOINCREMENT,
             test_id INTEGER,
-            runs TEXT,
-            status TEXT,
-            errorlogs TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            ends_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            event_type TEXT,
+            message TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         )
         """
         self.cursor.execute(query)
