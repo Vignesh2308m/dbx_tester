@@ -104,6 +104,15 @@ class JobTestProcessManager:
         self.init_count = 0
         pass
 
+    def _run_job(self, process_id, index):
+        process = self.processes[process_id]
+        process.current_jobs.add(index)
+        run = JobRunner(process.test_graph.job_index[index].job_id, process.test_graph.job_index[index].config).run()
+        process.runs.update({index: run})
+        process.logs.update({index: run.get_run_status()})
+
+
+
     def create_process(self, jtp: JobTestProcess) -> str:
         process_id = f"process_{len(self.processes) + 1}"
         self.processes[process_id] = jtp
@@ -128,7 +137,11 @@ class JobTestProcessManager:
                 process.runs.update({i: 'CANCELED'})
                 process.state = JobTestState.CANCELED
         self.save_logs(process_id)
-    
+
+    def update_status(self, process_id: str) -> None:
+        #TODO: Implement logic to save logs
+        pass
+
     def save_logs(self, process_id: str) -> None:
         #TODO: Implement logic to save logs
         pass
@@ -280,7 +293,7 @@ class JobTest():
         self.dep_graph.test_job = submit_run(name=test_job_name, cluster_id=None)
         pass
 
-    def _save_test_artifacts(self):
+    def _save_test(self):
         #TODO
         pass
 
