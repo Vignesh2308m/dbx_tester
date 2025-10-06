@@ -147,8 +147,21 @@ class JobTestProcessManager:
                 if next_job not in self.processes.current_jobs:
                     self._run_job(next_job)
     
-    
-          
+    def init(self):
+        self._init_process()
+        pass
+
+    def monitor(self):
+        self._check_and_update_current_state()
+        self._check_for_failure()
+        if self.processes.state != JobTestState.FAILED:
+            self._stop_process()
+            return
+        self._check_for_next_run()
+        
+    def stop(self):
+        self._stop_process()
+        pass
 
 class JobTest():
     def __init__(self, fn, job: Job):
