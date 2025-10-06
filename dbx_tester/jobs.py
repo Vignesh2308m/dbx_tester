@@ -50,7 +50,7 @@ class JobTestProcess:
     test_graph: JobTestGraph = None
     state: JobTestState = JobTestState.PENDING
     current_jobs: Set[int] = field(default_factory=set)
-    runs: Dict[int,int] = field(default_factory=dict)
+    runs: Dict[int,JobRunner] = field(default_factory=dict)
     logs: Dict[int,str] = field(default_factory=dict)
 
 
@@ -99,123 +99,56 @@ class Job:
             object.__setattr__(self, 'job_id', get_job_id(name=self.name, job_id=self.job_id))
 
 class JobTestProcessManager:
-    def __init__(self):
-        self.processes: Dict[str, JobTestProcess] = {}
-        self.init_count = 0
-        pass
+    def __init__(self, processs:JobTestProcess):
+        self.processes: JobTestProcess = processs
 
-    def _run_job(self, process_id, index):
-        process = self.processes[process_id]
-        process.current_jobs.add(index)
-        run = JobRunner(process.test_graph.job_index[index].job_id, process.test_graph.job_index[index].config).run()
-        process.runs.update({index: run})
-        process.logs.update({index: run.get_run_status()})
-
-
-
-    def create_process(self, jtp: JobTestProcess) -> str:
-        process_id = f"process_{len(self.processes) + 1}"
-        self.processes[process_id] = jtp
-        #TODO: Save to db
-
-    def init_process(self) -> None:
-        for process_id in self.processes.keys():
-            process = self.processes[process_id]
-            for i in process.test_graph.entry_point:
-                process.current_jobs.add(i)
-                run = JobRunner(process.test_graph.job_index[i].job_id, process.test_graph.job_index[i].config).run()
-                process.runs.update({i: run})
-                process.runs.update({i: run.get_run_status()})
-            process.state = JobTestState.RUNNING
+    def _run_job(self, index):
+        run = JobRunner(self.processes.test_graph.job_index[index].job_id, self.processes.test_graph.job_index[index].config).run()
+        self.processes.current_jobs.add(index)
+        self.processes.runs.update({index: run})
+        self.processes.logs.update({index: run.get_run_status()})
     
-    def stop_process(self, process_id) -> None:
-        process = self.processes[process_id]
-        for i in process.current_jobs:
-            run = process.runs[i]
+    def _update_status(self, index):
+        run = self.processes.runs[index]
+        self.processes.logs.update({index: run.get_run_status()})
+
+    def _init_process(self) -> None:
+        for i in self.processes.test_graph.entry_point:
+            self._run_job(i)
+        self.processes.state = JobTestState.RUNNING
+    
+    def _stop_process(self) -> None:
+        for i in self.processes.current_jobs:
+            run = self.processes.runs[i]
             if run.get_run_status() == 'RUNNING':
                 run.cancel_run()
-                process.runs.update({i: 'CANCELED'})
-                process.state = JobTestState.CANCELED
-        self.save_logs(process_id)
-
-    def update_status(self, process_id: str) -> None:
-        #TODO: Implement logic to save logs
-        pass
-
-    def save_logs(self, process_id: str) -> None:
-        #TODO: Implement logic to save logs
-        pass
+                self.processes.logs.update({i: 'CANCELED'})
+        self.processes.state = JobTestState.CANCELED
     
-    def check_for_interrupt(self, process_id: str) -> None:
-        pass
+    def _check_and_update_current_state(self):
+        for i in self.processes.current_jobs:
+            run = self.processes.runs[i]
+            self.processes.logs.update({i: run.get_run_status()})
     
-    def check_and_update_current_state(self, process_id):
-        process = self.processes[process_id]
-        for i in process.current_jobs:
-            run = process.runs[i]
-            process.runs.update({i: run.get_run_status()})
-        pass
-    
-    def check_for_failure(self, process_id: str):
-        process = self.processes[process_id]
-        for i in process.current_jobs:
-            run = process.runs[i]
-            if run.get_run_status() == 'FAILED':
-                    process.state = JobTestState.FAILED
-                    self.stop_process(process_id)
-                    self.save_logs(process_id)
+    def _check_for_failure(self):
+        for i in self.processes.current_jobs:
+            if self.processes.logs[i] == 'FAILED':
+                    self.processes.state = JobTestState.FAILED
                     return
 
-    def check_for_next_run(self, process_id:str):
-        process = self.processes[process_id]
-        if process.state != JobTestState.FAILED:
+    def _check_for_next_run(self):
+        if self.processes.state != JobTestState.FAILED:
             return
-        for i in process.current_jobs:
-            run = process.runs[i]
-            if run.get_run_status() != 'SUCCESS':
+        for i in self.processes.current_jobs:
+            if self.processes.logs[i] != 'SUCCESS':
                 continue
-            next_jobs = process.test_graph.job_flow.get(i, set())
+            next_jobs = self.processes.test_graph.job_flow.get(i, set())
             for next_job in next_jobs:
-                if next_job not in process.current_jobs:
-                    process.current_jobs.add(next_job)
-                    new_run = JobRunner(process.test_graph.job_index[next_job].job_id, 
-                                        process.test_graph.job_index[next_job].config).run()
-                    process.runs.update({next_job: new_run})
-                    process.runs.update({next_job: new_run.get_run_status()})
-
-    def execute_test(self, process_id: str) -> None:
-        process = self.processes[process_id]
-        if (
-            all(status == 'SUCCESS' for status in process.runs.values()) 
-            and len(process.runs) == len(process.test_graph.job_index)
-            and 'test_job' in process.runs.keys
-            ):
-
-            run = process.test_graph.test_job.run()
-            process.runs.update({'test_job': run})
-            process.logs.update({'test_job': run.get_run_status()})
-            self.save_logs(process_id)
+                if next_job not in self.processes.current_jobs:
+                    self._run_job(next_job)
     
-    def complete_test(self, process_id: str) -> None:
-        process = self.processes[process_id]
-        if all(status == 'SUCCESS' for status in process.runs.values()) and len(process.runs) == len(process.test_graph.job_index) + 1:
-            process.state = JobTestState.SUCCESS
-            self.save_logs(process_id)
-            self.processes.pop(process_id)
-
     
-    def monitor_process(self) -> None:
-        if self.init_count == 0:
-            raise JobTestProcessError("Process not initialized. Call init_run() before monitoring.")
-        while self.init_count == len(self.processes) and not self.interrupt_process():
-            for process_id in self.processes.keys():
-                process = self.processes[process_id]
-                self.check_and_update_current_state(process_id)
-                self.check_for_failure(process_id)
-                self.check_for_interrupt(process_id)
-                self.check_for_next_run(process_id)
-                self.execute_test(process_id)
-                self.complete_test(process_id)               
+          
 
 class JobTest():
     def __init__(self, fn, job: Job):
