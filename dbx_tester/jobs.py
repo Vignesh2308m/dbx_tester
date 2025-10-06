@@ -151,6 +151,9 @@ class JobTestProcessManager:
         self._init_process()
         pass
 
+    def state(self):
+        return self.processes.state
+
     def monitor(self):
         self._check_and_update_current_state()
         self._check_for_failure()
@@ -158,7 +161,7 @@ class JobTestProcessManager:
             self._stop_process()
             return
         self._check_for_next_run()
-        
+
     def stop(self):
         self._stop_process()
         pass
@@ -223,20 +226,15 @@ class JobTest():
     def _build_test_notebook(self):
 
         notebook_name = f"test_{self.fn.__name__}"
-
         test_notebook = notebook_builder(notebook_name)
-
         test_notebook.add_cell(f"%run {self.current_path.as_posix()}")
-
         test_notebook.add_cell(f"{self.fn.__name__}.run()")
-
-        test_notebook.save(self.notebook_dir / f"{notebook_name}")
+        test_notebook.save_notebook((self.notebook_dir / f"{notebook_name}").as_posix())
 
     def _build_test_job(self):
 
         test_job_name = f"test_{self.fn.__name__}"
-
-        self.dep_graph.test_job = submit_run(name=test_job_name, cluster_id=None)
+        self.dep_graph.test_job = submit_run(name=test_job_name, cluster_id=None).as_dict()
         pass
 
     def _save_test(self):
